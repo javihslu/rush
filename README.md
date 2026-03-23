@@ -20,6 +20,13 @@ and the odds of being sardined into an overcrowded train.
 
 ## Quick Start
 
+One-liner (requires Git and Docker):
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/javihslu/rush/main/install.sh)
+```
+
+Or set up manually:
+
 ### Prerequisites
 
 <details>
@@ -47,9 +54,7 @@ and the odds of being sardined into an overcrowded train.
 3. Install [Docker Desktop](https://www.docker.com/products/docker-desktop) (enable WSL 2 backend in settings)
 4. Open your WSL terminal (Ubuntu) and run:
    ```bash
-   git clone git@github.com:javihslu/rush.git
-   cd rush
-   ./setup.sh
+   bash <(curl -fsSL https://raw.githubusercontent.com/javihslu/rush/main/install.sh)
    ```
 
 </details>
