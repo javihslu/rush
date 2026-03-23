@@ -20,4 +20,11 @@ dev = [
     "ipykernel>=7.2",
     "jupyter>=1.1",
     "pgcli>=4.4",
+    "ruff>=0.9",
 ]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.format]
+quote-style = "double"

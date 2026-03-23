@@ -7,14 +7,10 @@
         "vscode": {
             "settings": {
                 "python.defaultInterpreterPath": "/app/.venv/bin/python",
-                "python.terminal.activateEnvironment": false,
-                "[python]": {
-                    "editor.defaultFormatter": "charliermarsh.ruff"
-                }
+                "python.terminal.activateEnvironment": false
             },
             "extensions": [
                 "ms-python.python",
-                "charliermarsh.ruff",
                 "ms-toolsai.jupyter",
                 "redhat.vscode-yaml"
             ]
