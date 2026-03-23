@@ -81,6 +81,11 @@ Ports are configurable in `config.yaml`.
 
 To stop: `docker compose down`
 
+To fully clean up (containers, volumes, images, generated files):
+```bash
+./teardown.sh
+```
+
 ## Tech Stack
 
 - **Ingestion**: dlt, Python
