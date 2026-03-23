@@ -15,9 +15,14 @@ pgadmin:
   email: admin@admin.com
   password: root
 
+kestra:
+  user: admin@admin.com
+  password: admin
+
 ports:
   postgres: 5432
   pgadmin: 8085
+  kestra: 8080
 
 gcp:
   region: europe-west6

@@ -5,10 +5,13 @@ description = "Swiss public transport and weather analytics pipeline"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "dbt-core>=1.7",
+    "dbt-duckdb>=1.7",
     "dlt[duckdb]>=1.0",
     "pandas>=2.2",
     "psycopg2-binary>=2.9",
     "pyyaml>=6.0",
+    "requests>=2.31",
     "sqlalchemy>=2.0",
 ]
 

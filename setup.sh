@@ -35,6 +35,9 @@ PGADMIN_EMAIL=$(yaml_val pgadmin email)
 PGADMIN_PASSWORD=$(yaml_val pgadmin password)
 PORT_POSTGRES=$(yaml_val ports postgres)
 PORT_PGADMIN=$(yaml_val ports pgadmin)
+PORT_KESTRA=$(yaml_val ports kestra)
+KESTRA_USER=$(yaml_val kestra user)
+KESTRA_PASSWORD=$(yaml_val kestra password)
 GCP_REGION=$(yaml_val gcp region)
 
 echo "$PROJECT_NAME -- project setup"
@@ -185,6 +188,9 @@ PGADMIN_DEFAULT_EMAIL=$PGADMIN_EMAIL
 PGADMIN_DEFAULT_PASSWORD=$PGADMIN_PASSWORD
 POSTGRES_PORT_HOST=$PORT_POSTGRES
 PGADMIN_PORT_HOST=$PORT_PGADMIN
+KESTRA_USER=$KESTRA_USER
+KESTRA_PASSWORD=$KESTRA_PASSWORD
+KESTRA_PORT_HOST=$PORT_KESTRA
 ENVEOF
     echo "[ok] .env generated from config.yaml"
 else
@@ -389,5 +395,6 @@ echo "====================="
 echo "Setup complete."
 echo ""
 echo "  pgAdmin:    http://localhost:${PORT_PGADMIN:-8085}"
+echo "  Kestra:     http://localhost:${PORT_KESTRA:-8080}"
 echo "  PostgreSQL: localhost:${PORT_POSTGRES:-5432}"
 echo "  Stop:       $COMPOSE down"
