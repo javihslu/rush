@@ -20,11 +20,39 @@ and the odds of being sardined into an overcrowded train.
 
 ## Quick Start
 
-```bash
-git clone git@github.com:javihslu/rush.git
-cd rush
-./setup.sh
-```
+### Prerequisites
+
+<details>
+<summary><strong>macOS / Linux</strong></summary>
+
+1. Install [Git](https://git-scm.com/downloads)
+2. Install [Docker Desktop](https://www.docker.com/products/docker-desktop)
+3. Clone and run:
+   ```bash
+   git clone git@github.com:javihslu/rush.git
+   cd rush
+   ./setup.sh
+   ```
+
+</details>
+
+<details>
+<summary><strong>Windows</strong></summary>
+
+1. Open PowerShell as Administrator and install WSL 2:
+   ```powershell
+   wsl --install
+   ```
+2. Restart your computer
+3. Install [Docker Desktop](https://www.docker.com/products/docker-desktop) (enable WSL 2 backend in settings)
+4. Open your WSL terminal (Ubuntu) and run:
+   ```bash
+   git clone git@github.com:javihslu/rush.git
+   cd rush
+   ./setup.sh
+   ```
+
+</details>
 
 The setup script checks for required tools and offers to install anything missing
 (Homebrew on macOS, apt/dnf on Linux). It handles the full setup:
@@ -36,11 +64,6 @@ The setup script checks for required tools and offers to install anything missin
 5. Creates a GCP project, links billing, enables APIs
 6. Generates `gcp_config.json` and `terraform.tfvars`
 7. Runs `terraform apply` to provision GCS bucket and BigQuery dataset
-
-The only things you need beforehand:
-- [Git](https://git-scm.com/downloads)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop)
-- **Windows users:** [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install) — run `wsl --install` in PowerShell, then work from the WSL terminal
 
 Everything else (`gcloud`, `terraform`) is installed for you if missing.
 
