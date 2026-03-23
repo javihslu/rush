@@ -123,6 +123,7 @@ rush/
   Dockerfile                # dev container (Python 3.13 + uv + deps)
   docker-compose.yaml       # full dev stack
   setup.sh                  # one-command setup (local stack + GCP onboarding)
+  teardown.sh               # full cleanup (containers, volumes, images, GCP)
   pyproject.toml            # Python dependencies (uv)
 ```
 
