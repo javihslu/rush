@@ -8,18 +8,65 @@ echo "rush -- project setup"
 echo "====================="
 echo ""
 
-# -- check prerequisites --
+OS="$(uname -s)"
+
+# -- helpers --
 
 check_command() {
-    if ! command -v "$1" &> /dev/null; then
-        echo "ERROR: '$1' is not installed."
-        echo "  $2"
-        exit 1
-    fi
+    command -v "$1" &> /dev/null
 }
 
-check_command "git" "Install git: https://git-scm.com/downloads"
-check_command "docker" "Install Docker Desktop: https://www.docker.com/products/docker-desktop"
+install_with_brew() {
+    if ! check_command brew; then
+        echo "Installing Homebrew ..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null)"
+    fi
+    echo "  brew install $1 ..."
+    brew install "$1"
+}
+
+offer_install() {
+    local cmd="$1" name="$2" brew_pkg="$3" manual_url="$4"
+
+    if check_command "$cmd"; then
+        echo "[ok] $name"
+        return 0
+    fi
+
+    echo ""
+    echo "$name is not installed."
+
+    if [[ "$OS" == "Darwin" ]]; then
+        read -r -p "  Install $name via Homebrew? [Y/n]: " INSTALL_CHOICE
+        INSTALL_CHOICE="${INSTALL_CHOICE:-Y}"
+        if [[ "$INSTALL_CHOICE" =~ ^[Yy]$ ]]; then
+            install_with_brew "$brew_pkg"
+            echo "[ok] $name installed"
+            return 0
+        fi
+    fi
+
+    echo "  Install manually: $manual_url"
+    return 1
+}
+
+# -- check / install prerequisites --
+
+if ! check_command git; then
+    echo "ERROR: git is not installed."
+    echo "  https://git-scm.com/downloads"
+    exit 1
+fi
+echo "[ok] git"
+
+# docker
+if ! check_command docker; then
+    echo ""
+    echo "ERROR: Docker is not installed."
+    echo "  Install Docker Desktop: https://www.docker.com/products/docker-desktop"
+    exit 1
+fi
 
 if ! docker info &> /dev/null; then
     echo "ERROR: Docker daemon is not running. Start Docker Desktop and try again."
@@ -28,7 +75,7 @@ fi
 
 if docker compose version &> /dev/null; then
     COMPOSE="docker compose"
-elif command -v docker-compose &> /dev/null; then
+elif check_command docker-compose; then
     COMPOSE="docker-compose"
 else
     echo "ERROR: docker compose is not available."
@@ -37,9 +84,19 @@ else
     exit 1
 fi
 
-echo "[ok] git"
 echo "[ok] docker"
 echo "[ok] docker compose"
+
+# gcloud
+HAVE_GCLOUD=true
+offer_install "gcloud" "gcloud CLI" "google-cloud-sdk" \
+    "https://cloud.google.com/sdk/docs/install" || HAVE_GCLOUD=false
+
+# terraform
+HAVE_TERRAFORM=true
+offer_install "terraform" "Terraform" "hashicorp/tap/terraform" \
+    "https://developer.hashicorp.com/terraform/install" || HAVE_TERRAFORM=false
+
 echo ""
 
 # -- environment file --
@@ -80,15 +137,9 @@ else
     echo ""
 
     # check gcloud
-    if ! command -v gcloud &> /dev/null; then
-        echo "gcloud CLI is not installed. Skipping GCP setup."
-        echo ""
-        echo "  Install it from: https://cloud.google.com/sdk/docs/install"
-        echo "  macOS:    brew install google-cloud-sdk"
-        echo "  Linux:    curl https://sdk.cloud.google.com | bash"
-        echo "  Windows:  download installer from the link above"
-        echo ""
-        echo "  Then re-run: ./setup.sh"
+    if [ "$HAVE_GCLOUD" = false ]; then
+        echo "gcloud CLI is not available. Skipping GCP setup."
+        echo "  Install it and re-run: ./setup.sh"
         echo ""
         echo "Local stack is running. You can start working locally."
         exit 0
@@ -96,10 +147,9 @@ else
 
     echo "[ok] gcloud CLI"
 
-    if ! command -v terraform &> /dev/null; then
+    if [ "$HAVE_TERRAFORM" = false ]; then
         echo ""
-        echo "WARNING: terraform is not installed."
-        echo "  Install: https://developer.hashicorp.com/terraform/install"
+        echo "WARNING: terraform is not available."
         echo "  You can continue GCP setup and install terraform later."
         echo ""
     else
@@ -230,7 +280,7 @@ TFEOF
 
         # -- terraform provisioning --
 
-        if command -v terraform &> /dev/null && [ -f "$REPO_DIR/terraform/main.tf" ]; then
+        if [ "$HAVE_TERRAFORM" = true ] && [ -f "$REPO_DIR/terraform/main.tf" ]; then
             echo "Provisioning cloud infrastructure with Terraform ..."
             echo ""
             cd "$REPO_DIR/terraform"
@@ -239,10 +289,9 @@ TFEOF
             cd "$REPO_DIR"
             echo ""
             echo "[ok] Cloud infrastructure provisioned"
-        elif ! command -v terraform &> /dev/null; then
-            echo "Terraform is not installed -- skipping cloud provisioning."
-            echo "  Install: https://developer.hashicorp.com/terraform/install"
-            echo "  Then run: cd terraform && terraform init && terraform apply"
+        elif [ "$HAVE_TERRAFORM" = false ]; then
+            echo "Terraform is not available -- skipping cloud provisioning."
+            echo "  Install terraform and re-run: ./setup.sh"
         else
             echo "No terraform/main.tf found -- skipping cloud provisioning."
         fi

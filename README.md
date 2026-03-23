@@ -20,21 +20,16 @@ and the odds of being sardined into an overcrowded train.
 
 ## Quick Start
 
-Prerequisites:
-- [Git](https://git-scm.com/downloads)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop)
-- [gcloud CLI](https://cloud.google.com/sdk/docs/install) (for GCP)
-- [Terraform](https://developer.hashicorp.com/terraform/install) (for cloud provisioning)
-
 ```bash
 git clone git@github.com:javihslu/rush.git
 cd rush
 ./setup.sh
 ```
 
-The setup script handles everything:
+The setup script checks for required tools and offers to install anything missing (via
+Homebrew on macOS). It handles the full setup:
 
-1. Checks prerequisites (git, docker, docker compose, gcloud, terraform)
+1. Installs missing prerequisites (gcloud CLI, Terraform) if you agree
 2. Creates `.env` from template
 3. Starts the local Docker stack (PostgreSQL, pgAdmin)
 4. Authenticates with Google Cloud (two browser logins)
@@ -42,8 +37,11 @@ The setup script handles everything:
 6. Generates `gcp_config.json` and `terraform.tfvars`
 7. Runs `terraform apply` to provision GCS bucket and BigQuery dataset
 
-If `gcloud` or `terraform` are not installed, the script skips those steps and starts the local stack.
-Re-run `./setup.sh` after installing them to complete the setup.
+The only things you need beforehand:
+- [Git](https://git-scm.com/downloads)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop)
+
+Everything else (`gcloud`, `terraform`) is installed for you if missing.
 
 Once running:
 - pgAdmin: http://localhost:8085
@@ -88,28 +86,31 @@ rush/
 
 All development runs inside Docker. No local Python installation required.
 
-### VS Code (recommended)
+### VS Code + Dev Containers (recommended)
 
-1. Install the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension
-2. Open the `rush` folder in VS Code
-3. Click "Reopen in Container" when prompted (or run `Dev Containers: Reopen in Container` from the command palette)
+1. Install [VS Code](https://code.visualstudio.com/) (free)
+2. Install the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension
+3. Open the `rush` folder in VS Code
+4. Click "Reopen in Container" when prompted (or run `Dev Containers: Reopen in Container` from the command palette)
 
 VS Code will build the container, start PostgreSQL and pgAdmin, install all dependencies, and open a terminal inside the dev environment. Python autocomplete, debugging, and Jupyter all work out of the box.
 
-### Terminal
+### Terminal only (no VS Code)
+
+If you prefer your own editor, just use Docker directly:
 
 ```bash
 # run a script
 docker compose run --rm dev uv run python ingestion/transport.py
 
-# open a shell
+# open a shell inside the container
 docker compose run --rm dev bash
 
 # run jupyter
 docker compose run --rm -p 8888:8888 dev uv run jupyter notebook --ip=0.0.0.0 --no-browser --allow-root
 ```
 
-Source code is mounted from your host, so edits are reflected immediately.
+Source code is mounted from your host, so edits in any editor are reflected immediately.
 
 ## Status
 
