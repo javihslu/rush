@@ -26,8 +26,8 @@ cd rush
 ./setup.sh
 ```
 
-The setup script checks for required tools and offers to install anything missing (via
-Homebrew on macOS). It handles the full setup:
+The setup script checks for required tools and offers to install anything missing
+(Homebrew on macOS, apt/dnf on Linux). It handles the full setup:
 
 1. Installs missing prerequisites (gcloud CLI, Terraform) if you agree
 2. Creates `.env` from template

@@ -16,18 +16,45 @@ check_command() {
     command -v "$1" &> /dev/null
 }
 
-install_with_brew() {
+ensure_brew() {
     if ! check_command brew; then
-        echo "Installing Homebrew ..."
+        echo "  Installing Homebrew ..."
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null)"
     fi
-    echo "  brew install $1 ..."
-    brew install "$1"
+}
+
+install_package() {
+    local name="$1" brew_pkg="$2" apt_pkg="$3"
+
+    case "$OS" in
+        Darwin)
+            ensure_brew
+            echo "  brew install $brew_pkg ..."
+            brew install "$brew_pkg"
+            ;;
+        Linux)
+            if check_command apt-get; then
+                echo "  sudo apt-get install $apt_pkg ..."
+                sudo apt-get update -qq && sudo apt-get install -y -qq "$apt_pkg"
+            elif check_command dnf; then
+                echo "  sudo dnf install $apt_pkg ..."
+                sudo dnf install -y "$apt_pkg"
+            elif check_command snap; then
+                echo "  sudo snap install $apt_pkg --classic ..."
+                sudo snap install "$apt_pkg" --classic
+            else
+                return 1
+            fi
+            ;;
+        *)
+            return 1
+            ;;
+    esac
 }
 
 offer_install() {
-    local cmd="$1" name="$2" brew_pkg="$3" manual_url="$4"
+    local cmd="$1" name="$2" brew_pkg="$3" apt_pkg="$4" manual_url="$5"
 
     if check_command "$cmd"; then
         echo "[ok] $name"
@@ -37,13 +64,25 @@ offer_install() {
     echo ""
     echo "$name is not installed."
 
-    if [[ "$OS" == "Darwin" ]]; then
-        read -r -p "  Install $name via Homebrew? [Y/n]: " INSTALL_CHOICE
+    local pkg_mgr=""
+    case "$OS" in
+        Darwin) pkg_mgr="Homebrew" ;;
+        Linux)
+            if check_command apt-get; then pkg_mgr="apt"
+            elif check_command dnf; then pkg_mgr="dnf"
+            elif check_command snap; then pkg_mgr="snap"
+            fi
+            ;;
+    esac
+
+    if [ -n "$pkg_mgr" ]; then
+        read -r -p "  Install $name via $pkg_mgr? [Y/n]: " INSTALL_CHOICE
         INSTALL_CHOICE="${INSTALL_CHOICE:-Y}"
         if [[ "$INSTALL_CHOICE" =~ ^[Yy]$ ]]; then
-            install_with_brew "$brew_pkg"
-            echo "[ok] $name installed"
-            return 0
+            if install_package "$name" "$brew_pkg" "$apt_pkg"; then
+                echo "[ok] $name installed"
+                return 0
+            fi
         fi
     fi
 
@@ -89,12 +128,12 @@ echo "[ok] docker compose"
 
 # gcloud
 HAVE_GCLOUD=true
-offer_install "gcloud" "gcloud CLI" "google-cloud-sdk" \
+offer_install "gcloud" "gcloud CLI" "google-cloud-sdk" "google-cloud-cli" \
     "https://cloud.google.com/sdk/docs/install" || HAVE_GCLOUD=false
 
 # terraform
 HAVE_TERRAFORM=true
-offer_install "terraform" "Terraform" "hashicorp/tap/terraform" \
+offer_install "terraform" "Terraform" "hashicorp/tap/terraform" "terraform" \
     "https://developer.hashicorp.com/terraform/install" || HAVE_TERRAFORM=false
 
 echo ""
