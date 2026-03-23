@@ -255,7 +255,7 @@ else
         echo "  A browser window will open. Log in with your Google account."
         echo ""
         read -r -p "Press Enter to open the browser..."
-        gcloud auth login --no-launch-browser=false
+        gcloud auth login
         echo ""
         echo "[ok] Authenticated"
         echo ""
