@@ -338,6 +338,7 @@ else
         echo ""
         read -r -p "Press Enter to open the browser..."
         gcloud auth application-default login
+        gcloud auth application-default set-quota-project "$PROJECT_ID" 2>/dev/null || true
         echo ""
         echo "[ok] ADC configured"
         echo ""
