@@ -82,6 +82,24 @@ rush/
   .env.example          # environment variable template
 ```
 
+## Configuration
+
+All configuration lives in `.env` (created automatically from `.env.example` on first run).
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `POSTGRES_USER` | `root` | PostgreSQL username |
+| `POSTGRES_PASSWORD` | `root` | PostgreSQL password |
+| `POSTGRES_DB` | `rush` | Database name |
+| `POSTGRES_HOST` | `pgdatabase` | Hostname (Docker service name) |
+| `POSTGRES_PORT` | `5432` | Internal container port |
+| `PGADMIN_DEFAULT_EMAIL` | `admin@admin.com` | pgAdmin login email |
+| `PGADMIN_DEFAULT_PASSWORD` | `root` | pgAdmin login password |
+| `POSTGRES_PORT_HOST` | `5432` | Host port for PostgreSQL |
+| `PGADMIN_PORT_HOST` | `8085` | Host port for pgAdmin |
+
+Change the `*_PORT_HOST` variables if you have port conflicts with other services.
+
 ## Development
 
 All development runs inside Docker. No local Python installation required.
@@ -111,7 +129,3 @@ docker compose run --rm -p 8888:8888 dev uv run jupyter notebook --ip=0.0.0.0 --
 ```
 
 Source code is mounted from your host, so edits in any editor are reflected immediately.
-
-## Status
-
-Project setup
