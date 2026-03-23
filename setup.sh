@@ -4,11 +4,44 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$REPO_DIR"
 
-echo "rush -- project setup"
+OS="$(uname -s)"
+
+# -- config.yaml parser --
+
+yaml_val() {
+    # Extract a value from config.yaml given a section and key.
+    # Usage: yaml_val section key
+    awk -v section="$1" -v key="$2" '
+        $0 ~ "^"section":" { in_section=1; next }
+        in_section && /^[a-zA-Z]/ { in_section=0 }
+        in_section && $0 ~ "^  "key":" {
+            val = $0; sub(/^[^:]+:[[:space:]]*/, "", val); print val; exit
+        }
+    ' "$REPO_DIR/config.yaml"
+}
+
+if [ ! -f "$REPO_DIR/config.yaml" ]; then
+    echo "ERROR: config.yaml not found."
+    exit 1
+fi
+
+PROJECT_NAME=$(yaml_val project name)
+DB_USER=$(yaml_val database user)
+DB_PASSWORD=$(yaml_val database password)
+DB_NAME=$(yaml_val database name)
+DB_HOST=$(yaml_val database host)
+DB_PORT=$(yaml_val database port)
+PGADMIN_EMAIL=$(yaml_val pgadmin email)
+PGADMIN_PASSWORD=$(yaml_val pgadmin password)
+PORT_POSTGRES=$(yaml_val ports postgres)
+PORT_PGADMIN=$(yaml_val ports pgadmin)
+GCP_REGION=$(yaml_val gcp region)
+
+echo "$PROJECT_NAME -- project setup"
 echo "====================="
 echo ""
-
-OS="$(uname -s)"
+echo "[ok] config.yaml loaded"
+echo ""
 
 # -- helpers --
 
@@ -138,15 +171,24 @@ offer_install "terraform" "Terraform" "hashicorp/tap/terraform" "terraform" \
 
 echo ""
 
-# -- environment file --
+# -- generate .env from config.yaml --
 
 if [ ! -f ".env" ]; then
-    if [ -f ".env.example" ]; then
-        cp .env.example .env
-        echo "[ok] .env created from template"
-    fi
+    cat > .env <<ENVEOF
+# Auto-generated from config.yaml — edit config.yaml instead.
+POSTGRES_USER=$DB_USER
+POSTGRES_PASSWORD=$DB_PASSWORD
+POSTGRES_DB=$DB_NAME
+POSTGRES_HOST=$DB_HOST
+POSTGRES_PORT=$DB_PORT
+PGADMIN_DEFAULT_EMAIL=$PGADMIN_EMAIL
+PGADMIN_DEFAULT_PASSWORD=$PGADMIN_PASSWORD
+POSTGRES_PORT_HOST=$PORT_POSTGRES
+PGADMIN_PORT_HOST=$PORT_PGADMIN
+ENVEOF
+    echo "[ok] .env generated from config.yaml"
 else
-    echo "[ok] .env already exists"
+    echo "[ok] .env already exists (delete it to regenerate from config.yaml)"
 fi
 
 # -- bring up the local stack --
@@ -218,7 +260,7 @@ else
         echo ""
 
         EMAIL_PREFIX=$(echo "$ACCOUNT" | cut -d@ -f1 | tr '.' '-' | tr -cd 'a-z0-9-' | head -c 20)
-        DEFAULT_PROJECT_ID="rush-${EMAIL_PREFIX}"
+        DEFAULT_PROJECT_ID="${PROJECT_NAME}-${EMAIL_PREFIX}"
 
         echo "Step 2/6: Create GCP project"
         read -r -p "Project ID [$DEFAULT_PROJECT_ID]: " PROJECT_ID
@@ -231,7 +273,7 @@ else
         read -r -p "Region [1]: " REGION_CHOICE
         case "${REGION_CHOICE:-1}" in
             2) REGION="europe-west1" ;;
-            *) REGION="europe-west6" ;;
+            *) REGION="${GCP_REGION:-europe-west6}" ;;
         esac
 
         echo ""
@@ -346,6 +388,6 @@ fi
 echo "====================="
 echo "Setup complete."
 echo ""
-echo "  pgAdmin:    http://localhost:${PGADMIN_PORT_HOST:-8085}"
-echo "  PostgreSQL: localhost:${POSTGRES_PORT_HOST:-5432}"
+echo "  pgAdmin:    http://localhost:${PORT_PGADMIN:-8085}"
+echo "  PostgreSQL: localhost:${PORT_POSTGRES:-5432}"
 echo "  Stop:       $COMPOSE down"

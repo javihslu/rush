@@ -1,0 +1,26 @@
+# Rush — project configuration
+# This is the single source of truth. setup.sh generates .env from this file.
+
+project:
+  name: rush
+
+database:
+  user: root
+  password: root
+  name: rush
+  host: pgdatabase
+  port: 5432
+
+pgadmin:
+  email: admin@admin.com
+  password: root
+
+ports:
+  postgres: 5432
+  pgadmin: 8085
+
+gcp:
+  region: europe-west6
+  apis:
+    - storage.googleapis.com
+    - bigquery.googleapis.com

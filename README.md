@@ -104,30 +104,51 @@ rush/
   terraform/            # GCP infrastructure as code
   notebooks/            # exploratory analysis
   .devcontainer/        # VS Code Dev Container config
+  config.yaml             # central configuration (single source of truth)
+  config.py               # Python config loader
   Dockerfile            # dev container (Python 3.13 + uv + deps)
   docker-compose.yaml   # full dev stack
   setup.sh              # one-command setup (local stack + GCP onboarding)
   pyproject.toml        # Python dependencies (uv)
-  .env.example          # environment variable template
+  .env.example          # environment variable reference
 ```
 
 ## Configuration
 
-All configuration lives in `.env` (created automatically from `.env.example` on first run).
+All configuration lives in `config.yaml` — the single source of truth.
+`setup.sh` generates `.env` from it for Docker Compose. Python code reads it directly.
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `POSTGRES_USER` | `root` | PostgreSQL username |
-| `POSTGRES_PASSWORD` | `root` | PostgreSQL password |
-| `POSTGRES_DB` | `rush` | Database name |
-| `POSTGRES_HOST` | `pgdatabase` | Hostname (Docker service name) |
-| `POSTGRES_PORT` | `5432` | Internal container port |
-| `PGADMIN_DEFAULT_EMAIL` | `admin@admin.com` | pgAdmin login email |
-| `PGADMIN_DEFAULT_PASSWORD` | `root` | pgAdmin login password |
-| `POSTGRES_PORT_HOST` | `5432` | Host port for PostgreSQL |
-| `PGADMIN_PORT_HOST` | `8085` | Host port for pgAdmin |
+```yaml
+project:
+  name: rush
 
-Change the `*_PORT_HOST` variables if you have port conflicts with other services.
+database:
+  user: root
+  password: root
+  name: rush
+  host: pgdatabase
+  port: 5432
+
+pgadmin:
+  email: admin@admin.com
+  password: root
+
+ports:
+  postgres: 5432       # change these if you have port conflicts
+  pgadmin: 8085
+
+gcp:
+  region: europe-west6
+```
+
+To apply changes: edit `config.yaml`, delete `.env`, and re-run `./setup.sh`.
+
+In Python:
+```python
+from config import cfg
+
+db_host = cfg["database"]["host"]
+```
 
 ## Development
 
