@@ -44,8 +44,8 @@ The only things you need beforehand:
 Everything else (`gcloud`, `terraform`) is installed for you if missing.
 
 Once running:
-- pgAdmin: http://localhost:8085
-- PostgreSQL: `localhost:5432`
+- pgAdmin: http://localhost:8085 (configurable via `PGADMIN_PORT_HOST` in `.env`)
+- PostgreSQL: `localhost:5432` (configurable via `POSTGRES_PORT_HOST` in `.env`)
 
 To stop: `docker compose down`
 

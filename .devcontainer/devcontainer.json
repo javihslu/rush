@@ -20,17 +20,10 @@
             ]
         }
     },
-    "forwardPorts": [
-        5432,
-        8085
-    ],
-    "portsAttributes": {
-        "5432": {
-            "label": "PostgreSQL"
-        },
-        "8085": {
-            "label": "pgAdmin"
-        }
+    "forwardPorts": [],
+    "portsAttributes": {},
+    "otherPortsAttributes": {
+        "onAutoForward": "notify"
     },
     "postCreateCommand": "uv sync",
     "remoteUser": "root"

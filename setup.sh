@@ -346,6 +346,6 @@ fi
 echo "====================="
 echo "Setup complete."
 echo ""
-echo "  pgAdmin:    http://localhost:8085"
-echo "  PostgreSQL: localhost:5432"
+echo "  pgAdmin:    http://localhost:${PGADMIN_PORT_HOST:-8085}"
+echo "  PostgreSQL: localhost:${POSTGRES_PORT_HOST:-5432}"
 echo "  Stop:       $COMPOSE down"
