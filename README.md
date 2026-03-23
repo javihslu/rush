@@ -40,6 +40,7 @@ The setup script checks for required tools and offers to install anything missin
 The only things you need beforehand:
 - [Git](https://git-scm.com/downloads)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop)
+- **Windows users:** [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install) — run `wsl --install` in PowerShell, then work from the WSL terminal
 
 Everything else (`gcloud`, `terraform`) is installed for you if missing.
 
