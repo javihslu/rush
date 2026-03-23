@@ -7,30 +7,19 @@
         "vscode": {
             "settings": {
                 "python.defaultInterpreterPath": "/app/.venv/bin/python",
-                "python.terminal.activateEnvironment": false,
-                "[python]": {
-                    "editor.defaultFormatter": "charliermarsh.ruff"
-                }
+                "python.terminal.activateEnvironment": false
             },
             "extensions": [
                 "ms-python.python",
-                "charliermarsh.ruff",
                 "ms-toolsai.jupyter",
                 "redhat.vscode-yaml"
             ]
         }
     },
-    "forwardPorts": [
-        5432,
-        8085
-    ],
-    "portsAttributes": {
-        "5432": {
-            "label": "PostgreSQL"
-        },
-        "8085": {
-            "label": "pgAdmin"
-        }
+    "forwardPorts": [],
+    "portsAttributes": {},
+    "otherPortsAttributes": {
+        "onAutoForward": "notify"
     },
     "postCreateCommand": "uv sync",
     "remoteUser": "root"

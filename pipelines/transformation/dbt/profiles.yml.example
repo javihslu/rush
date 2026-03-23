@@ -1,0 +1,15 @@
+# Copy to profiles.yml and adjust settings.
+# profiles.yml is gitignored — setup.sh generates it automatically.
+
+rush:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: /app/rush.duckdb
+    prod:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('GCP_PROJECT_ID') }}"
+      dataset: rush
+      location: europe-west6

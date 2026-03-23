@@ -1,6 +1,12 @@
 volumes:
   rush_postgres_data:
     driver: local
+  kestra_postgres_data:
+    driver: local
+  kestra_data:
+    driver: local
+  kestra_tmp:
+    driver: local
 
 services:
   dev:
@@ -20,7 +26,7 @@ services:
     volumes:
       - rush_postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT_HOST:-5432}:5432"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
       interval: 10s
@@ -31,7 +37,62 @@ services:
     image: dpage/pgadmin4
     env_file: .env
     ports:
-      - "8085:80"
+      - "${PGADMIN_PORT_HOST:-8085}:80"
     depends_on:
       pgdatabase:
+        condition: service_healthy
+
+  kestra_postgres:
+    image: postgres:18
+    volumes:
+      - kestra_postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: kestra
+      POSTGRES_USER: kestra
+      POSTGRES_PASSWORD: k3str4
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+  kestra:
+    image: kestra/kestra:v1.1
+    pull_policy: always
+    user: "root"
+    command: server standalone
+    volumes:
+      - kestra_data:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
+      - kestra_tmp:/tmp/kestra-wd
+      - ./flows:/app/flows
+    environment:
+      KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://kestra_postgres:5432/kestra
+            driverClassName: org.postgresql.Driver
+            username: kestra
+            password: k3str4
+        kestra:
+          server:
+            basicAuth:
+              username: ${KESTRA_USER:-admin@admin.com}
+              password: ${KESTRA_PASSWORD:-admin}
+          repository:
+            type: postgres
+          storage:
+            type: local
+            local:
+              basePath: "/app/storage"
+          queue:
+            type: postgres
+          tasks:
+            tmpDir:
+              path: /tmp/kestra-wd/tmp
+          url: http://localhost:8080/
+    ports:
+      - "${KESTRA_PORT_HOST:-8080}:8080"
+    depends_on:
+      kestra_postgres:
         condition: service_healthy

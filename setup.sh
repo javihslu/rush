@@ -4,22 +4,144 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$REPO_DIR"
 
-echo "rush -- project setup"
+OS="$(uname -s)"
+
+# -- config.yaml parser --
+
+yaml_val() {
+    # Extract a value from config.yaml given a section and key.
+    # Usage: yaml_val section key
+    awk -v section="$1" -v key="$2" '
+        $0 ~ "^"section":" { in_section=1; next }
+        in_section && /^[a-zA-Z]/ { in_section=0 }
+        in_section && $0 ~ "^  "key":" {
+            val = $0; sub(/^[^:]+:[[:space:]]*/, "", val); print val; exit
+        }
+    ' "$REPO_DIR/config.yaml"
+}
+
+if [ ! -f "$REPO_DIR/config.yaml" ]; then
+    echo "ERROR: config.yaml not found."
+    exit 1
+fi
+
+PROJECT_NAME=$(yaml_val project name)
+DB_USER=$(yaml_val database user)
+DB_PASSWORD=$(yaml_val database password)
+DB_NAME=$(yaml_val database name)
+DB_HOST=$(yaml_val database host)
+DB_PORT=$(yaml_val database port)
+PGADMIN_EMAIL=$(yaml_val pgadmin email)
+PGADMIN_PASSWORD=$(yaml_val pgadmin password)
+PORT_POSTGRES=$(yaml_val ports postgres)
+PORT_PGADMIN=$(yaml_val ports pgadmin)
+PORT_KESTRA=$(yaml_val ports kestra)
+KESTRA_USER=$(yaml_val kestra user)
+KESTRA_PASSWORD=$(yaml_val kestra password)
+GCP_REGION=$(yaml_val gcp region)
+
+echo "$PROJECT_NAME -- project setup"
 echo "====================="
 echo ""
+echo "[ok] config.yaml loaded"
+echo ""
 
-# -- check prerequisites --
+# -- helpers --
 
 check_command() {
-    if ! command -v "$1" &> /dev/null; then
-        echo "ERROR: '$1' is not installed."
-        echo "  $2"
-        exit 1
+    command -v "$1" &> /dev/null
+}
+
+ensure_brew() {
+    if ! check_command brew; then
+        echo "  Installing Homebrew ..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null)"
     fi
 }
 
-check_command "git" "Install git: https://git-scm.com/downloads"
-check_command "docker" "Install Docker Desktop: https://www.docker.com/products/docker-desktop"
+install_package() {
+    local name="$1" brew_pkg="$2" apt_pkg="$3"
+
+    case "$OS" in
+        Darwin)
+            ensure_brew
+            echo "  brew install $brew_pkg ..."
+            brew install "$brew_pkg"
+            ;;
+        Linux)
+            if check_command apt-get; then
+                echo "  sudo apt-get install $apt_pkg ..."
+                sudo apt-get update -qq && sudo apt-get install -y -qq "$apt_pkg"
+            elif check_command dnf; then
+                echo "  sudo dnf install $apt_pkg ..."
+                sudo dnf install -y "$apt_pkg"
+            elif check_command snap; then
+                echo "  sudo snap install $apt_pkg --classic ..."
+                sudo snap install "$apt_pkg" --classic
+            else
+                return 1
+            fi
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+offer_install() {
+    local cmd="$1" name="$2" brew_pkg="$3" apt_pkg="$4" manual_url="$5"
+
+    if check_command "$cmd"; then
+        echo "[ok] $name"
+        return 0
+    fi
+
+    echo ""
+    echo "$name is not installed."
+
+    local pkg_mgr=""
+    case "$OS" in
+        Darwin) pkg_mgr="Homebrew" ;;
+        Linux)
+            if check_command apt-get; then pkg_mgr="apt"
+            elif check_command dnf; then pkg_mgr="dnf"
+            elif check_command snap; then pkg_mgr="snap"
+            fi
+            ;;
+    esac
+
+    if [ -n "$pkg_mgr" ]; then
+        read -r -p "  Install $name via $pkg_mgr? [Y/n]: " INSTALL_CHOICE
+        INSTALL_CHOICE="${INSTALL_CHOICE:-Y}"
+        if [[ "$INSTALL_CHOICE" =~ ^[Yy]$ ]]; then
+            if install_package "$name" "$brew_pkg" "$apt_pkg"; then
+                echo "[ok] $name installed"
+                return 0
+            fi
+        fi
+    fi
+
+    echo "  Install manually: $manual_url"
+    return 1
+}
+
+# -- check / install prerequisites --
+
+if ! check_command git; then
+    echo "ERROR: git is not installed."
+    echo "  https://git-scm.com/downloads"
+    exit 1
+fi
+echo "[ok] git"
+
+# docker
+if ! check_command docker; then
+    echo ""
+    echo "ERROR: Docker is not installed."
+    echo "  Install Docker Desktop: https://www.docker.com/products/docker-desktop"
+    exit 1
+fi
 
 if ! docker info &> /dev/null; then
     echo "ERROR: Docker daemon is not running. Start Docker Desktop and try again."
@@ -28,7 +150,7 @@ fi
 
 if docker compose version &> /dev/null; then
     COMPOSE="docker compose"
-elif command -v docker-compose &> /dev/null; then
+elif check_command docker-compose; then
     COMPOSE="docker-compose"
 else
     echo "ERROR: docker compose is not available."
@@ -37,20 +159,42 @@ else
     exit 1
 fi
 
-echo "[ok] git"
 echo "[ok] docker"
 echo "[ok] docker compose"
+
+# gcloud
+HAVE_GCLOUD=true
+offer_install "gcloud" "gcloud CLI" "google-cloud-sdk" "google-cloud-cli" \
+    "https://cloud.google.com/sdk/docs/install" || HAVE_GCLOUD=false
+
+# terraform
+HAVE_TERRAFORM=true
+offer_install "terraform" "Terraform" "hashicorp/tap/terraform" "terraform" \
+    "https://developer.hashicorp.com/terraform/install" || HAVE_TERRAFORM=false
+
 echo ""
 
-# -- environment file --
+# -- generate .env from config.yaml --
 
 if [ ! -f ".env" ]; then
-    if [ -f ".env.example" ]; then
-        cp .env.example .env
-        echo "[ok] .env created from template"
-    fi
+    cat > .env <<ENVEOF
+# Auto-generated from config.yaml — edit config.yaml instead.
+POSTGRES_USER=$DB_USER
+POSTGRES_PASSWORD=$DB_PASSWORD
+POSTGRES_DB=$DB_NAME
+POSTGRES_HOST=$DB_HOST
+POSTGRES_PORT=$DB_PORT
+PGADMIN_DEFAULT_EMAIL=$PGADMIN_EMAIL
+PGADMIN_DEFAULT_PASSWORD=$PGADMIN_PASSWORD
+POSTGRES_PORT_HOST=$PORT_POSTGRES
+PGADMIN_PORT_HOST=$PORT_PGADMIN
+KESTRA_USER=$KESTRA_USER
+KESTRA_PASSWORD=$KESTRA_PASSWORD
+KESTRA_PORT_HOST=$PORT_KESTRA
+ENVEOF
+    echo "[ok] .env generated from config.yaml"
 else
-    echo "[ok] .env already exists"
+    echo "[ok] .env already exists (delete it to regenerate from config.yaml)"
 fi
 
 # -- bring up the local stack --
@@ -80,15 +224,9 @@ else
     echo ""
 
     # check gcloud
-    if ! command -v gcloud &> /dev/null; then
-        echo "gcloud CLI is not installed. Skipping GCP setup."
-        echo ""
-        echo "  Install it from: https://cloud.google.com/sdk/docs/install"
-        echo "  macOS:    brew install google-cloud-sdk"
-        echo "  Linux:    curl https://sdk.cloud.google.com | bash"
-        echo "  Windows:  download installer from the link above"
-        echo ""
-        echo "  Then re-run: ./setup.sh"
+    if [ "$HAVE_GCLOUD" = false ]; then
+        echo "gcloud CLI is not available. Skipping GCP setup."
+        echo "  Install it and re-run: ./setup.sh"
         echo ""
         echo "Local stack is running. You can start working locally."
         exit 0
@@ -96,10 +234,9 @@ else
 
     echo "[ok] gcloud CLI"
 
-    if ! command -v terraform &> /dev/null; then
+    if [ "$HAVE_TERRAFORM" = false ]; then
         echo ""
-        echo "WARNING: terraform is not installed."
-        echo "  Install: https://developer.hashicorp.com/terraform/install"
+        echo "WARNING: terraform is not available."
         echo "  You can continue GCP setup and install terraform later."
         echo ""
     else
@@ -129,7 +266,7 @@ else
         echo ""
 
         EMAIL_PREFIX=$(echo "$ACCOUNT" | cut -d@ -f1 | tr '.' '-' | tr -cd 'a-z0-9-' | head -c 20)
-        DEFAULT_PROJECT_ID="rush-${EMAIL_PREFIX}"
+        DEFAULT_PROJECT_ID="${PROJECT_NAME}-${EMAIL_PREFIX}"
 
         echo "Step 2/6: Create GCP project"
         read -r -p "Project ID [$DEFAULT_PROJECT_ID]: " PROJECT_ID
@@ -142,7 +279,7 @@ else
         read -r -p "Region [1]: " REGION_CHOICE
         case "${REGION_CHOICE:-1}" in
             2) REGION="europe-west1" ;;
-            *) REGION="europe-west6" ;;
+            *) REGION="${GCP_REGION:-europe-west6}" ;;
         esac
 
         echo ""
@@ -230,7 +367,7 @@ TFEOF
 
         # -- terraform provisioning --
 
-        if command -v terraform &> /dev/null && [ -f "$REPO_DIR/terraform/main.tf" ]; then
+        if [ "$HAVE_TERRAFORM" = true ] && [ -f "$REPO_DIR/terraform/main.tf" ]; then
             echo "Provisioning cloud infrastructure with Terraform ..."
             echo ""
             cd "$REPO_DIR/terraform"
@@ -239,10 +376,9 @@ TFEOF
             cd "$REPO_DIR"
             echo ""
             echo "[ok] Cloud infrastructure provisioned"
-        elif ! command -v terraform &> /dev/null; then
-            echo "Terraform is not installed -- skipping cloud provisioning."
-            echo "  Install: https://developer.hashicorp.com/terraform/install"
-            echo "  Then run: cd terraform && terraform init && terraform apply"
+        elif [ "$HAVE_TERRAFORM" = false ]; then
+            echo "Terraform is not available -- skipping cloud provisioning."
+            echo "  Install terraform and re-run: ./setup.sh"
         else
             echo "No terraform/main.tf found -- skipping cloud provisioning."
         fi
@@ -258,6 +394,7 @@ fi
 echo "====================="
 echo "Setup complete."
 echo ""
-echo "  pgAdmin:    http://localhost:8085"
-echo "  PostgreSQL: localhost:5432"
+echo "  pgAdmin:    http://localhost:${PORT_PGADMIN:-8085}"
+echo "  Kestra:     http://localhost:${PORT_KESTRA:-8080}"
+echo "  PostgreSQL: localhost:${PORT_POSTGRES:-5432}"
 echo "  Stop:       $COMPOSE down"

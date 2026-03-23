@@ -39,6 +39,10 @@ gcp_config.json
 target/
 dbt_packages/
 logs/
+profiles.yml
+
+# Kestra
+kestra_data/
 
 # Terraform
 .terraform/
