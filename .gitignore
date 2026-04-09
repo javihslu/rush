@@ -39,7 +39,6 @@ gcp_config.json
 target/
 dbt_packages/
 logs/
-profiles.yml
 .user.yml
 
 # Airflow

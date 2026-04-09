@@ -1,4 +1,4 @@
-FROM python:3.13-slim
+FROM python:3.12-slim
 
 # system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -12,8 +12,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
 # install Airflow (separate from uv — Airflow has strict dependency constraints)
-ARG AIRFLOW_VERSION=3.0.6
-ARG PYTHON_VERSION=3.13
+ARG AIRFLOW_VERSION=2.10.5
+ARG PYTHON_VERSION=3.12
 RUN pip install --no-cache-dir "apache-airflow[postgres]==${AIRFLOW_VERSION}" \
     --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt"
 

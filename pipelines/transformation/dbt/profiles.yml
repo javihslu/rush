@@ -1,0 +1,21 @@
+# Copy to profiles.yml and adjust settings.
+# profiles.yml is gitignored — setup.sh generates it automatically.
+
+rush:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: pgdatabase
+      port: 5432
+      user: root
+      password: root
+      dbname: rush
+      schema: dbt_dev
+      threads: 4
+    prod:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('GCP_PROJECT_ID') }}"
+      dataset: rush
+      location: europe-west6

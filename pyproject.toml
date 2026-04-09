@@ -3,7 +3,7 @@ name = "rush"
 version = "0.1.0"
 description = "Swiss public transport and weather analytics pipeline"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "dbt-core>=1.7",
     "dbt-postgres>=1.7",
