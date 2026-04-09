@@ -1,7 +1,7 @@
 """Ingest weather forecast data from Open-Meteo for the office location.
 
 Fetches a 7-day hourly forecast for Luzern, Switzerland and loads it into
-PostgreSQL using dlt. Run manually or via Kestra:
+PostgreSQL using dlt. Run manually or via Airflow:
 
     docker compose run --rm dev uv run python pipelines/ingestion/weather.py
 """

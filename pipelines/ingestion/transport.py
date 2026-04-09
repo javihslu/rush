@@ -1,7 +1,7 @@
 """Ingest Swiss public transport departures from transport.opendata.ch.
 
 Fetches live departure data for configured stations and loads it into
-PostgreSQL using dlt in batch mode. Run manually or via Kestra:
+PostgreSQL using dlt in batch mode. Run manually or via Airflow:
 
     docker compose run --rm dev uv run python pipelines/ingestion/transport.py
 """

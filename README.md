@@ -73,7 +73,7 @@ The setup script checks for required tools and offers to install anything missin
 Everything else (`gcloud`, `terraform`) is installed for you if missing.
 
 Once running:
-- Kestra: http://localhost:8080 (workflow orchestration UI)
+- Airflow: http://localhost:8080 (workflow orchestration UI)
 - pgAdmin: http://localhost:8085
 - PostgreSQL: `localhost:5432`
 
@@ -89,14 +89,14 @@ To fully clean up (containers, volumes, images, generated files):
 ## Tech Stack
 
 - **Ingestion**: dlt, Python
-- **Orchestration**: Kestra
-- **Warehouse**: DuckDB / BigQuery
+- **Orchestration**: Apache Airflow
+- **Warehouse**: PostgreSQL / BigQuery
 - **Transformation**: dbt
 - **Infrastructure**: Docker, Terraform
 
 ## Data Sources
 
-- [opentransportdata.swiss](https://opentransportdata.swiss) -- SBB/CFF schedules and delay data
+- [transport.opendata.ch](https://transport.opendata.ch) -- SBB/CFF schedules and delay data
 - [Open-Meteo](https://open-meteo.com) -- Weather forecasts and historical data (Swiss-based, free)
 
 ## Project Structure
@@ -114,7 +114,7 @@ rush/
           staging/          # raw → cleaned views
           marts/            # business-ready tables
       transform.py          # ad-hoc Python transforms
-  flows/                    # Kestra workflow definitions (YAML)
+  dags/                     # Airflow DAG definitions
   terraform/                # GCP infrastructure as code
   notebooks/                # exploratory analysis
   .devcontainer/            # VS Code Dev Container config
@@ -150,11 +150,11 @@ pgadmin:
 ports:
   postgres: 5432       # change these if you have port conflicts
   pgadmin: 8085
-  kestra: 8080
+  airflow: 8080
 
-kestra:
-  user: admin@admin.com
-  password: admin
+airflow:
+  user: airflow
+  password: airflow
 
 gcp:
   region: europe-west6

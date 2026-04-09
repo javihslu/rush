@@ -40,9 +40,10 @@ target/
 dbt_packages/
 logs/
 profiles.yml
+.user.yml
 
-# Kestra
-kestra_data/
+# Airflow
+airflow_logs/
 
 # Terraform
 .terraform/
@@ -50,4 +51,3 @@ kestra_data/
 *.tfstate.backup
 *.tfvars
 *.pdf
-CLAUDE.md
