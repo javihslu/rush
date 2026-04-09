@@ -11,6 +11,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
+# install Airflow (separate from uv — Airflow has strict dependency constraints)
+ARG AIRFLOW_VERSION=2.10.5
+ARG PYTHON_VERSION=3.13
+RUN pip install --no-cache-dir "apache-airflow[postgres]==${AIRFLOW_VERSION}" \
+    --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt"
+
 WORKDIR /app
 
 # install dependencies first (cached layer)

@@ -23,5 +23,3 @@ def get_db_url() -> str:
     """Build a PostgreSQL DSN from config.yaml values."""
     db = cfg["database"]
     return f"postgresql://{db['user']}:{db['password']}@{db['host']}:{db['port']}/{db['name']}"
-
-print(".env wurde neu generiert")
