@@ -148,10 +148,17 @@ flowchart TD
     DBT -->|staging + marts| PG
     PG --> PGA["pgAdmin"]
 
-    PG -.->|future| GCS["GCS Data Lake"]
-    GCS -.->|future| BQ["BigQuery"]
+    SBB --> CU["cloud_upload.py"]
+    OME --> CU
+    CU -->|NDJSON| GCS["GCS Data Lake"]
+    GCS --> BQL["cloud_load_bq.py"]
+    BQL --> BQ["BigQuery"]
+    AF -->|schedules| CU
+    AF -->|triggers| BQL
+    AF -->|triggers| DBTC["dbt --target prod"]
+    DBTC -->|staging + marts| BQ
 
-    subgraph local ["Docker Compose"]
+    subgraph local ["Docker Compose (local)"]
         T
         W
         AF
@@ -163,6 +170,9 @@ flowchart TD
     subgraph cloud ["GCP (Terraform)"]
         GCS
         BQ
+        CU
+        BQL
+        DBTC
     end
 ```
 
@@ -172,10 +182,12 @@ flowchart TD
 
 | Component | Tool | Purpose |
 |-----------|------|---------|
-| Ingestion | dlt + Python | Batch data loading from APIs |
+| Ingestion | dlt + Python | Batch data loading from APIs to PostgreSQL |
+| Cloud Ingestion | google-cloud-storage + google-cloud-bigquery | Upload to GCS and load into BigQuery |
 | Storage | PostgreSQL 18 | Local data warehouse |
+| Cloud Storage | GCS + BigQuery | Cloud data lake and warehouse |
 | Admin | pgAdmin | Database UI |
-| Transformation | dbt-core | SQL-based staging and mart models |
+| Transformation | dbt-core | SQL-based staging and mart models (PostgreSQL + BigQuery) |
 | Orchestration | Apache Airflow 2.10.5 | DAG scheduling, triggers, backfills |
 | Containerization | Docker Compose | Full reproducible environment |
 | Infrastructure | Terraform | GCS bucket + BigQuery dataset provisioning |

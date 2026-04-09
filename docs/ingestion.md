@@ -164,3 +164,69 @@ $ docker compose exec pgdatabase psql -U root -d rush \
 ```
 
 A null `departure_actual` means the train is on time (no delay reported by the API).
+
+---
+
+## Cloud Ingestion (GCS + BigQuery)
+
+In addition to the local PostgreSQL pipeline, Rush has a cloud pipeline that loads data into Google Cloud. It runs in two steps, orchestrated by the `rush_cloud_ingestion` Airflow DAG (see [Orchestration](orchestration.md#cloud-dags)).
+
+```mermaid
+flowchart LR
+    SBB["transport.opendata.ch"] -->|HTTP GET| CU["cloud_upload.py"]
+    OME["Open-Meteo API"] -->|HTTP GET| CU
+    CU -->|NDJSON| GCS["GCS<br/>rush-*-data-lake"]
+    GCS --> BQL["cloud_load_bq.py"]
+    BQL --> BQT["BigQuery<br/>transport_raw.departures"]
+    BQL --> BQW["BigQuery<br/>weather_raw.hourly_forecast"]
+
+    style GCS fill:#2d333b,stroke:#f0883e
+    style BQT fill:#2d333b,stroke:#79c0ff
+    style BQW fill:#2d333b,stroke:#79c0ff
+```
+
+### Step 1: Upload to GCS
+
+**Source file:** [`pipelines/ingestion/cloud_upload.py`](https://github.com/javihslu/rush/blob/main/pipelines/ingestion/cloud_upload.py)
+
+Fetches the same API data as the local scripts, but writes it as newline-delimited JSON (NDJSON) files to the GCS data lake bucket instead of PostgreSQL.
+
+**GCS layout:**
+
+| Path | Content |
+|------|---------|
+| `raw/transport/departures_YYYY-MM-DD.json` | One NDJSON file per day with all departures |
+| `raw/weather/forecast_YYYY-MM-DD.json` | One NDJSON file per day with the hourly forecast |
+
+**How it authenticates:** Uses Application Default Credentials (ADC) mounted at `/gcp/credentials.json` inside the container. The `GCP_PROJECT_ID` and `GCP_BUCKET_NAME` environment variables are set via Docker Compose.
+
+### Step 2: Load into BigQuery
+
+**Source file:** [`pipelines/ingestion/cloud_load_bq.py`](https://github.com/javihslu/rush/blob/main/pipelines/ingestion/cloud_load_bq.py)
+
+Reads the NDJSON files from GCS and loads them into BigQuery raw datasets using the BigQuery Load API with auto-detected schema.
+
+| Dataset | Table | Write mode | Why |
+|---------|-------|------------|-----|
+| `transport_raw` | `departures` | WRITE_APPEND | Accumulate historical departure data |
+| `weather_raw` | `hourly_forecast` | WRITE_TRUNCATE | Replace with latest forecast |
+
+Datasets are created automatically in `europe-west6` if they do not exist.
+
+### Verify Cloud Ingestion
+
+```
+$ docker compose exec dev uv run python pipelines/ingestion/cloud_upload.py
+
+Uploaded 100 transport records to gs://rush-javihslu-data-lake/raw/transport/departures_2026-04-09.json
+Uploaded 168 weather records to gs://rush-javihslu-data-lake/raw/weather/forecast_2026-04-09.json
+Cloud ingestion complete.
+
+$ docker compose exec dev uv run python pipelines/ingestion/cloud_load_bq.py
+
+Loading transport data into BigQuery ...
+  Loaded 100 rows into transport_raw.departures
+Loading weather data into BigQuery ...
+  Loaded 168 rows into weather_raw.hourly_forecast
+BigQuery load complete.
+```

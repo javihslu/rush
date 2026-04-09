@@ -9,6 +9,7 @@ dependencies = [
     "dbt-bigquery>=1.7",
     "dbt-postgres>=1.7",
     "dlt[postgres]>=1.0",
+    "google-cloud-storage>=2.14",
     "pandas>=2.2",
     "psycopg2-binary>=2.9",
     "pyyaml>=6.0",

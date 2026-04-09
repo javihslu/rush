@@ -12,12 +12,15 @@ rush/
     workflows/
       docs.yml              # GitHub Pages deployment (this site)
   dags/
-    rush_pipeline.py        # Airflow DAG definitions (2 DAGs)
+    rush_pipeline.py        # Local Airflow DAGs (2 DAGs)
+    rush_cloud_pipeline.py  # Cloud Airflow DAGs (2 DAGs)
   docs/                     # Peer review manual (MkDocs source)
   pipelines/
     ingestion/
-      transport.py          # SBB/CFF departure ingestion (dlt)
-      weather.py            # Open-Meteo weather ingestion (dlt)
+      transport.py          # SBB/CFF departure ingestion (dlt -> PostgreSQL)
+      weather.py            # Open-Meteo weather ingestion (dlt -> PostgreSQL)
+      cloud_upload.py       # Upload raw data to GCS data lake
+      cloud_load_bq.py      # Load GCS data into BigQuery raw datasets
     transformation/
       dbt/
         macros/
@@ -30,7 +33,7 @@ rush/
           marts/
             mart_departure_recommendations.sql  # Business table
         dbt_project.yml     # dbt configuration
-        profiles.yml        # Database connection profiles
+        profiles.yml        # Database connection profiles (dev + prod)
   scripts/
     setup-gcp.sh            # GCP project setup + Terraform
   terraform/
@@ -55,7 +58,8 @@ rush/
 |-------------|--------|----------|
 | Source code | Present | `pipelines/`, `dags/`, `config.py` |
 | Docker configuration | Present | `Dockerfile`, `docker-compose.yaml` |
-| Orchestrator setup | Present | `dags/rush_pipeline.py`, Airflow services in docker-compose |
+| Orchestrator setup | Present | `dags/rush_pipeline.py`, `dags/rush_cloud_pipeline.py`, Airflow services in docker-compose |
+| Cloud pipeline | Present | `cloud_upload.py`, `cloud_load_bq.py`, GCS + BigQuery |
 | README documentation | Present | `README.md` with Quick Start, Tech Stack, Project Structure |
 | Terraform IaC | Present | `terraform/` with main.tf, variables.tf, outputs.tf |
 | `.env` not committed | Correct | `.env` is in `.gitignore`; `.env.example` is provided |

@@ -3,6 +3,8 @@
 **Your office escape advisor.** Rush tells you the perfect moment to flee the building —
 before the sky opens up, the trains break down, and everyone else has the same idea.
 
+> Full documentation and peer review manual: [javihslu.github.io/rush](https://javihslu.github.io/rush/)
+
 ## Overview
 
 Rush combines Swiss public transport schedules and weather forecasts to answer the only
@@ -64,10 +66,11 @@ To fully clean up (containers, volumes, images, generated files):
 
 ## Tech Stack
 
-- **Ingestion**: dlt, Python
-- **Orchestration**: Apache Airflow
-- **Warehouse**: PostgreSQL / BigQuery
-- **Transformation**: dbt
+- **Ingestion**: dlt, Python (local); google-cloud-storage, google-cloud-bigquery (cloud)
+- **Orchestration**: Apache Airflow (4 DAGs -- 2 local, 2 cloud)
+- **Warehouse**: PostgreSQL (local) / BigQuery (cloud)
+- **Data Lake**: Google Cloud Storage
+- **Transformation**: dbt (dual-target: PostgreSQL + BigQuery)
 - **Infrastructure**: Docker, Terraform
 
 ## Data Sources
@@ -80,9 +83,11 @@ To fully clean up (containers, volumes, images, generated files):
 ```
 rush/
   pipelines/                # all data pipeline code
-    ingestion/              # data ingestion scripts (dlt)
-      transport.py          # SBB/CFF departures and delays
-      weather.py            # Open-Meteo weather forecasts
+    ingestion/              # data ingestion scripts
+      transport.py          # SBB/CFF departures and delays (dlt -> PostgreSQL)
+      weather.py            # Open-Meteo weather forecasts (dlt -> PostgreSQL)
+      cloud_upload.py       # Upload raw data to GCS data lake
+      cloud_load_bq.py      # Load GCS data into BigQuery raw datasets
     transformation/         # data transformation
       dbt/                  # dbt project
         dbt_project.yml
@@ -91,6 +96,8 @@ rush/
           marts/            # business-ready tables
       transform.py          # ad-hoc Python transforms
   dags/                     # Airflow DAG definitions
+    rush_pipeline.py        # Local DAGs (ingestion + transformation)
+    rush_cloud_pipeline.py  # Cloud DAGs (GCS + BigQuery + dbt prod)
   terraform/                # GCP infrastructure (Terraform)
     main.tf                 # GCS bucket + BigQuery dataset
     variables.tf            # input variables

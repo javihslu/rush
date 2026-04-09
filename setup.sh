@@ -215,6 +215,19 @@ else
     fi
 fi
 
+# -- inject GCP vars into .env if available --
+
+if [ -f "$REPO_DIR/gcp_config.json" ]; then
+    _GCP_PROJECT=$(python3 -c "import json; print(json.load(open('$REPO_DIR/gcp_config.json'))['project_id'])" 2>/dev/null || true)
+    if [ -n "$_GCP_PROJECT" ]; then
+        grep -q "^GCP_PROJECT_ID=" .env 2>/dev/null || echo "GCP_PROJECT_ID=$_GCP_PROJECT" >> .env
+        grep -q "^GCP_BUCKET_NAME=" .env 2>/dev/null || echo "GCP_BUCKET_NAME=${_GCP_PROJECT}-data-lake" >> .env
+        echo "[ok] GCP environment variables added to .env"
+        echo "  Restarting containers to pick up GCP config ..."
+        $COMPOSE up -d --quiet-pull 2>/dev/null
+    fi
+fi
+
 echo "====================="
 echo "Setup complete."
 echo ""

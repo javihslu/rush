@@ -28,6 +28,23 @@ The PostgreSQL server is pre-registered in pgAdmin — no manual connection setu
 
 ---
 
+## Cloud Storage (GCS + BigQuery)
+
+Rush also supports a full cloud pipeline using Google Cloud. Infrastructure is provisioned with Terraform (see [`terraform/`](https://github.com/javihslu/rush/tree/main/terraform)).
+
+| Resource | Name | Purpose |
+|----------|------|---------|
+| GCS bucket | `rush-*-data-lake` | Raw NDJSON files uploaded by `cloud_upload.py` |
+| BigQuery dataset | `rush` | dbt mart tables (`--target prod`) |
+| BigQuery dataset | `transport_raw` | Raw departures loaded by `cloud_load_bq.py` |
+| BigQuery dataset | `weather_raw` | Raw forecasts loaded by `cloud_load_bq.py` |
+
+All BigQuery datasets are in `europe-west6` (Zurich). The cloud pipeline is orchestrated by two dedicated Airflow DAGs — see [Orchestration: Cloud DAGs](orchestration.md#cloud-dags).
+
+Authentication uses Application Default Credentials (ADC) mounted from the host into containers at `/gcp/credentials.json`. The Airflow `google_cloud_default` connection is created automatically during container initialization — no manual configuration needed.
+
+---
+
 ## Docker Compose Architecture
 
 All services run in a single Docker Compose stack on the same network. The file is [`docker-compose.yaml`](https://github.com/javihslu/rush/blob/main/docker-compose.yaml).
@@ -62,7 +79,7 @@ flowchart TB
 | `pgdatabase` | postgres:18 | Data warehouse | 5432 |
 | `pgadmin` | dpage/pgadmin4 | Database UI | 8085 |
 | `airflow-postgres` | postgres:16 | Airflow metadata database | -- |
-| `airflow-init` | Custom | Creates Airflow admin user on first start | -- |
+| `airflow-init` | Custom | Creates Airflow admin user and GCP connection on first start | -- |
 | `airflow-webserver` | Custom | Airflow web UI | 8080 |
 | `airflow-scheduler` | Custom | Runs DAGs on schedule | -- |
 

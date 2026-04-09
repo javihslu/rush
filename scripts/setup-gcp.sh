@@ -189,7 +189,20 @@ if [ "$HAVE_TERRAFORM" = true ]; then
     echo ""
     cd "$REPO_DIR/terraform"
     terraform init
-    terraform apply -auto-approve
+
+    # Try apply first; if resources already exist (409), import and re-apply
+    if ! terraform apply -auto-approve 2>&1 | tee /tmp/tf_output.log; then
+        if grep -q "409" /tmp/tf_output.log; then
+            echo ""
+            echo "Resources already exist -- importing into Terraform state ..."
+            terraform import google_storage_bucket.data_lake "${PROJECT_ID}-data-lake" 2>/dev/null || true
+            terraform import google_bigquery_dataset.rush "projects/${PROJECT_ID}/datasets/rush" 2>/dev/null || true
+            terraform import google_bigquery_dataset.transport_raw "projects/${PROJECT_ID}/datasets/transport_raw" 2>/dev/null || true
+            terraform import google_bigquery_dataset.weather_raw "projects/${PROJECT_ID}/datasets/weather_raw" 2>/dev/null || true
+            terraform apply -auto-approve
+        fi
+    fi
+
     cd "$REPO_DIR"
     echo ""
     echo "[ok] Cloud infrastructure provisioned"

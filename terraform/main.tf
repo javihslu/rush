@@ -40,3 +40,17 @@ resource "google_bigquery_dataset" "rush" {
 
   delete_contents_on_destroy = true
 }
+
+resource "google_bigquery_dataset" "transport_raw" {
+  dataset_id = "transport_raw"
+  location   = var.location
+
+  delete_contents_on_destroy = true
+}
+
+resource "google_bigquery_dataset" "weather_raw" {
+  dataset_id = "weather_raw"
+  location   = var.location
+
+  delete_contents_on_destroy = true
+}

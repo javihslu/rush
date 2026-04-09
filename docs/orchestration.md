@@ -6,9 +6,9 @@
 
 ## Overview
 
-Rush uses **Apache Airflow 2.10.5** with a LocalExecutor for orchestration. Two DAGs handle the full pipeline: one for ingestion (scheduled) and one for transformation (triggered).
+Rush uses **Apache Airflow 2.10.5** with a LocalExecutor for orchestration. Four DAGs handle the full pipeline: two for the local PostgreSQL pipeline and two for the GCP cloud pipeline.
 
-**File:** [`dags/rush_pipeline.py`](https://github.com/javihslu/rush/blob/main/dags/rush_pipeline.py)
+**Local DAGs** -- [`dags/rush_pipeline.py`](https://github.com/javihslu/rush/blob/main/dags/rush_pipeline.py)
 
 ```mermaid
 flowchart LR
@@ -27,6 +27,8 @@ flowchart LR
 
     TT -->|TriggerDagRunOperator| DBT
 ```
+
+**Cloud DAGs** -- [`dags/rush_cloud_pipeline.py`](https://github.com/javihslu/rush/blob/main/dags/rush_cloud_pipeline.py) (see [Cloud DAGs](#cloud-dags) below)
 
 ---
 
@@ -203,3 +205,73 @@ it manually.
 | Trigger chain works | Trigger `rush_ingestion` manually; confirm `rush_transformation` runs automatically after |
 | Tasks succeed | Check task status in the Airflow UI (all green) |
 | Data is transformed | Query `dbt_dev.mart_departure_recommendations` in pgAdmin |
+
+---
+
+## Cloud DAGs
+
+In addition to the local DAGs above, Rush defines two cloud DAGs for the GCP pipeline. These are in [`dags/rush_cloud_pipeline.py`](https://github.com/javihslu/rush/blob/main/dags/rush_cloud_pipeline.py).
+
+```mermaid
+flowchart LR
+    subgraph DAG3["rush_cloud_ingestion -- Manual trigger"]
+        GCS["upload_to_gcs"]
+        BQL["load_gcs_to_bigquery"]
+        TCT["trigger_cloud_transformation"]
+
+        GCS --> BQL --> TCT
+    end
+
+    subgraph DAG4["rush_cloud_transformation -- Triggered or manual"]
+        DBTP["dbt_run_prod"]
+    end
+
+    TCT -->|TriggerDagRunOperator| DBTP
+```
+
+### DAG 3: Cloud Ingestion
+
+| Property | Value |
+|----------|-------|
+| DAG ID | `rush_cloud_ingestion` |
+| Schedule | `None` (manual trigger) |
+| Start date | 2025-04-01 |
+| Catchup | Disabled |
+| Tags | `rush`, `cloud`, `ingestion` |
+
+**Tasks:**
+
+| Task | Type | Command | Purpose |
+|------|------|---------|---------|
+| `upload_to_gcs` | BashOperator | `uv run python pipelines/ingestion/cloud_upload.py` | Fetch APIs, write NDJSON to GCS |
+| `load_gcs_to_bigquery` | BashOperator | `uv run python pipelines/ingestion/cloud_load_bq.py` | Load GCS files into BQ raw datasets |
+| `trigger_cloud_transformation` | TriggerDagRunOperator | Triggers `rush_cloud_transformation` | Chain to dbt |
+
+### DAG 4: Cloud Transformation
+
+| Property | Value |
+|----------|-------|
+| DAG ID | `rush_cloud_transformation` |
+| Schedule | `None` (triggered only) |
+| Start date | 2025-04-01 |
+| Catchup | Disabled |
+| Tags | `rush`, `cloud`, `transformation` |
+
+**Tasks:**
+
+| Task | Type | Command |
+|------|------|---------|
+| `dbt_run_prod` | BashOperator | `dbt run --target prod` (runs all models against BigQuery) |
+
+### GCP Connection
+
+The `google_cloud_default` Airflow connection is created automatically during container initialization by `airflow-init`. It uses Application Default Credentials (ADC) mounted from the host at `/gcp/credentials.json`. No manual setup is required.
+
+### Verify Cloud DAGs
+
+```
+$ docker compose exec airflow-scheduler bash -c 'airflow dags list' | grep cloud
+
+rush_cloud_ingestion      | /opt/airflow/dags/rush_cloud_pipeline.py | rush | False
+rush_cloud_transformation | /opt/airflow/dags/rush_cloud_pipeline.py | rush | False
+```

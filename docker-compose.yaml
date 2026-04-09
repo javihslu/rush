@@ -16,10 +16,15 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'true'
+    GOOGLE_APPLICATION_CREDENTIALS: /gcp/credentials.json
+    AIRFLOW_CONN_GOOGLE_CLOUD_DEFAULT: google-cloud-platform://?extra__google_cloud_platform__key_path=%2Fgcp%2Fcredentials.json&extra__google_cloud_platform__project=${GCP_PROJECT_ID:-}
+    GCP_PROJECT_ID: ${GCP_PROJECT_ID:-}
+    GCP_BUCKET_NAME: ${GCP_BUCKET_NAME:-}
   volumes:
     - .:/app
     - ./dags:/opt/airflow/dags
     - airflow_logs:/opt/airflow/logs
+    - ${HOME}/.config/gcloud/application_default_credentials.json:/gcp/credentials.json:ro
   depends_on: &airflow-common-depends-on
     airflow-postgres:
       condition: service_healthy
@@ -28,8 +33,13 @@ services:
   dev:
     build: .
     env_file: .env
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /gcp/credentials.json
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID:-}
+      GCP_BUCKET_NAME: ${GCP_BUCKET_NAME:-}
     volumes:
       - .:/app
+      - ${HOME}/.config/gcloud/application_default_credentials.json:/gcp/credentials.json:ro
     depends_on:
       pgdatabase:
         condition: service_healthy
@@ -54,6 +64,10 @@ services:
     env_file: .env
     ports:
       - "8085:80"
+    environment:
+      PGADMIN_SERVER_JSON_FILE: /tmp/servers.json
+    entrypoint: >
+      /bin/sh -c " echo $${POSTGRES_HOST:-pgdatabase}:$${POSTGRES_PORT:-5432}:$${POSTGRES_DB:-rush}:$${POSTGRES_USER:-root}:$${POSTGRES_PASSWORD:-root} > /tmp/pgpassfile && chmod 600 /tmp/pgpassfile && echo '{\"Servers\":{\"1\":{\"Name\":\"'$${POSTGRES_DB:-rush}'\",\"Group\":\"Servers\",\"Host\":\"'$${POSTGRES_HOST:-pgdatabase}'\",\"Port\":'$${POSTGRES_PORT:-5432}',\"MaintenanceDB\":\"'$${POSTGRES_DB:-rush}'\",\"Username\":\"'$${POSTGRES_USER:-root}'\",\"SSLMode\":\"prefer\",\"PassFile\":\"/tmp/pgpassfile\"}}}' > /tmp/servers.json && /entrypoint.sh "
     depends_on:
       pgdatabase:
         condition: service_healthy
@@ -86,6 +100,16 @@ services:
           --lastname User \
           --role Admin \
           --email admin@example.com || true
+        airflow connections delete google_cloud_default 2>/dev/null || true
+        airflow connections add google_cloud_default \
+          --conn-type google_cloud_platform \
+          --conn-extra "{\"key_path\": \"/gcp/credentials.json\", \"project_id\": \"$${GCP_PROJECT_ID}\"}"
+        airflow variables set GCP_PROJECT_ID "$${GCP_PROJECT_ID}" 2>/dev/null || true
+        airflow variables set GCP_BUCKET_NAME "$${GCP_BUCKET_NAME}" 2>/dev/null || true
+        airflow variables set GCP_REGION "europe-west6" 2>/dev/null || true
+        airflow variables set BQ_DATASET "rush" 2>/dev/null || true
+        airflow variables set BQ_TRANSPORT_RAW_DATASET "transport_raw" 2>/dev/null || true
+        airflow variables set BQ_WEATHER_RAW_DATASET "weather_raw" 2>/dev/null || true
     environment:
       <<: *airflow-common-env
       _AIRFLOW_DB_MIGRATE: 'true'
