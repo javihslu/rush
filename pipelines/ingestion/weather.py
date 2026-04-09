@@ -18,7 +18,7 @@ import requests
 
 # Allow importing config from project root when run as a script
 sys.path.insert(0, str(Path(__file__).parents[2]))
-from config import cfg
+from config import get_db_url
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -135,17 +135,11 @@ def weather_source():
 # ---------------------------------------------------------------------------
 
 
-def build_connection_string() -> str:
-    """Build a PostgreSQL DSN from config.yaml values."""
-    db = cfg["database"]
-    return f"postgresql://{db['user']}:{db['password']}@{db['host']}:{db['port']}/{db['name']}"
-
-
 def run() -> None:
     """Instantiate and execute the dlt weather pipeline."""
     pipeline = dlt.pipeline(
         pipeline_name="weather",
-        destination=dlt.destinations.postgres(credentials=build_connection_string()),
+        destination=dlt.destinations.postgres(credentials=get_db_url()),
         dataset_name="weather_raw",
     )
     load_info = pipeline.run(weather_source())

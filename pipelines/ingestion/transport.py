@@ -18,7 +18,7 @@ import requests
 
 # Allow importing config from project root when run as a script
 sys.path.insert(0, str(Path(__file__).parents[2]))
-from config import cfg
+from config import get_db_url
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -146,17 +146,11 @@ def transport_source(stations: list[str] = None):
 # ---------------------------------------------------------------------------
 
 
-def build_connection_string() -> str:
-    """Build a PostgreSQL DSN from config.yaml values."""
-    db = cfg["database"]
-    return f"postgresql://{db['user']}:{db['password']}@{db['host']}:{db['port']}/{db['name']}"
-
-
 def run() -> None:
     """Instantiate and execute the dlt transport pipeline."""
     pipeline = dlt.pipeline(
         pipeline_name="transport",
-        destination=dlt.destinations.postgres(credentials=build_connection_string()),
+        destination=dlt.destinations.postgres(credentials=get_db_url()),
         dataset_name="transport_raw",
     )
     load_info = pipeline.run(transport_source())
