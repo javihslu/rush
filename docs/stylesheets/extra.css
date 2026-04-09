@@ -1,0 +1,94 @@
+/* Rush — Peer Review Manual */
+
+/* Source cards for use-case page */
+.source-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+@media (max-width: 768px) {
+    .source-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+.source-card {
+    border: 1px solid var(--md-default-fg-color--lightest);
+    border-radius: 8px;
+    padding: 1.2rem;
+    background: var(--md-code-bg-color);
+}
+
+.source-header {
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin-bottom: 0.25rem;
+}
+
+.source-url {
+    font-family: var(--md-code-font-family);
+    font-size: 0.8rem;
+    color: var(--md-accent-fg-color);
+    margin-bottom: 0.75rem;
+}
+
+.source-body p {
+    margin: 0.4rem 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Mermaid diagram sizing — match body text */
+.mermaid {
+    margin: 1.5rem 0;
+    font-size: 1rem !important;
+}
+
+.mermaid .nodeLabel {
+    font-size: 0.875rem !important;
+}
+
+.mermaid .edgeLabel {
+    font-size: 0.875rem !important;
+}
+
+/* Tables — match body text size */
+.md-typeset table:not([class]) th,
+.md-typeset table:not([class]) td {
+    padding: 0.5rem 0.75rem;
+}
+
+/* Grading overview table — highlight point totals */
+.md-typeset table:not([class]) tr:last-child td {
+    font-weight: 600;
+}
+
+/* Admonition tweaks */
+.md-typeset .admonition,
+.md-typeset details {
+    font-size: inherit;
+}
+
+/* Blockquote for section headers (point callouts) */
+.md-typeset blockquote {
+    border-left: 3px solid var(--md-accent-fg-color);
+    background: var(--md-code-bg-color);
+    padding: 0.75rem 1rem;
+    margin: 0 0 1.5rem 0;
+}
+
+.md-typeset blockquote p {
+    margin: 0;
+}
+
+/* Code block improvements */
+.md-typeset pre {
+    border-radius: 6px;
+}
+
+/* Navigation sections — slightly bolder */
+.md-nav__item--nested>.md-nav__link {
+    font-weight: 600;
+}

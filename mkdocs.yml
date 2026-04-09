@@ -1,0 +1,69 @@
+site_name: Rush
+site_url: https://javihslu.github.io/rush/
+site_description: Your office escape advisor — Swiss transport and weather data pipeline
+repo_url: https://github.com/javihslu/rush
+repo_name: javihslu/rush
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: deep orange
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: deep orange
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+  icon:
+    repo: fontawesome/brands/github
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.details
+  - pymdownx.mark
+  - admonition
+  - attr_list
+  - def_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Peer Review Manual:
+    - 1. Use Case: use-case.md
+    - 2. Ingestion: ingestion.md
+    - 3. Storage and Docker: storage-docker.md
+    - 4. Transformation: transformation.md
+    - 5. Orchestration: orchestration.md
+    - 6. Repository: repository.md

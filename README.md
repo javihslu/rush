@@ -5,43 +5,27 @@ before the sky opens up, the trains break down, and everyone else has the same i
 
 ## Overview
 
-Rush crunches Swiss public transport schedules, weather forecasts, and historical traffic
-patterns to answer the only question that matters at 5 PM: *"Should I run for it now, or am
-I already doomed?"*
+Rush combines Swiss public transport schedules and weather forecasts to answer the only
+question that matters at 5 PM: *"Should I leave now, or wait it out?"*
 
 **What it watches:**
-- Your escape route (office location → home station)
-- Live SBB/CFF departures, delays, and cancellations
-- Current and forecasted weather — because nobody wants to sprint through hail
-- Time of day, day of week, and seasonal chaos patterns
+- Live SBB/CFF departures and delays from your office station
+- 7-day hourly weather forecast — temperature, rain, snow, wind, visibility
 
-**What it tells you:** The optimal escape window — minimizing wait time, weather misery,
-and the odds of being sardined into an overcrowded train.
+**What it tells you:** A departure recommendation (Ideal / Good / Risky / Bad) based
+on current delays and weather conditions.
 
 ## Quick Start
 
-One-liner (requires Git and Docker):
+One command sets up everything on macOS, Linux, or Windows (WSL):
+
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/javihslu/rush/main/install.sh)
 ```
 
-Or set up manually:
-
-### Prerequisites
-
-<details>
-<summary><strong>macOS / Linux</strong></summary>
-
-1. Install [Git](https://git-scm.com/downloads)
-2. Install [Docker Desktop](https://www.docker.com/products/docker-desktop)
-3. Clone and run:
-   ```bash
-   git clone git@github.com:javihslu/rush.git
-   cd rush
-   ./setup.sh
-   ```
-
-</details>
+This clones the repository, checks for required tools (installing anything
+missing), and starts the full Docker stack. If you already have the repo
+cloned, run `./setup.sh` from inside it.
 
 <details>
 <summary><strong>Windows</strong></summary>
@@ -52,20 +36,17 @@ Or set up manually:
    ```
 2. Restart your computer
 3. Install [Docker Desktop](https://www.docker.com/products/docker-desktop) (enable WSL 2 backend in settings)
-4. Open your WSL terminal (Ubuntu) and run:
-   ```bash
-   bash <(curl -fsSL https://raw.githubusercontent.com/javihslu/rush/main/install.sh)
-   ```
+4. Open your WSL terminal (Ubuntu) and run the command above
 
 </details>
 
-The setup script checks for required tools and offers to install anything missing
-(Homebrew on macOS, apt/dnf on Linux). It handles the full setup:
+What the setup does:
 
-1. Installs missing prerequisites (gcloud CLI, Terraform) if you agree
-2. Creates `.env` from `config.yaml`
-3. Starts the local Docker stack (PostgreSQL, pgAdmin, Airflow)
-4. Runs `scripts/setup-gcp.sh` for cloud onboarding (auth, project, billing, APIs, Terraform)
+1. Checks for Git, Docker, gcloud CLI, and Terraform -- offers to install anything missing
+2. Reads `config.yaml` and generates a `.env` file for Docker Compose
+3. Builds and starts all Docker containers (`docker compose up -d --build`)
+4. If gcloud is available, runs `scripts/setup-gcp.sh` for cloud onboarding
+5. Prints service URLs when everything is ready
 
 Once running:
 - Airflow: http://localhost:8080 (workflow orchestration UI)
