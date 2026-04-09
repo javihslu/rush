@@ -67,4 +67,3 @@ joined as (
 )
 
 select * from joined
-order by departure_scheduled_at
