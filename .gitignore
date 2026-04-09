@@ -50,3 +50,6 @@ airflow_logs/
 *.tfstate.backup
 *.tfvars
 *.pdf
+
+# MkDocs
+site/

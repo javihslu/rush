@@ -12,7 +12,7 @@ with source as (
 cleaned as (
     select
         id,
-        forecast_time::timestamp  as forecast_hour,
+        cast(forecast_time as timestamp)  as forecast_hour,
         latitude,
         longitude,
         temperature_2m,
@@ -42,7 +42,7 @@ cleaned as (
             or weathercode in (45, 48, 71, 73, 75, 77,
                                85, 86, 95, 96, 99)            as bad_weather,
 
-        ingested_at::timestamp  as ingested_at
+        cast(ingested_at as timestamp)  as ingested_at
 
     from source
 )

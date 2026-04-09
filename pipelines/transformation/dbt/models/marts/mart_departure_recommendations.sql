@@ -7,6 +7,12 @@
 --       delay_minutes + precipitation * 2 + snowfall * 5
 --   - A recommendation label is derived from the score thresholds
 
+{{ config(
+    materialized='table',
+    partition_by={'field': 'departure_scheduled_at', 'data_type': 'timestamp', 'granularity': 'day'} if target.type == 'bigquery' else none,
+    cluster_by=['station', 'category'] if target.type == 'bigquery' else none
+) }}
+
 with departures as (
     select * from {{ ref('stg_transport__departures') }}
 ),
@@ -57,7 +63,7 @@ joined as (
 
     from departures d
     left join weather w
-        on date_trunc('hour', d.departure_scheduled_at) = w.forecast_hour
+        on {{ dbt.date_trunc("hour", "d.departure_scheduled_at") }} = w.forecast_hour
 )
 
 select * from joined

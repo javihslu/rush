@@ -22,26 +22,28 @@ cleaned as (
         platform_scheduled,
 
         -- Cast string timestamps to proper types
-        departure_scheduled::timestamptz  as departure_scheduled_at,
-        departure_actual::timestamptz     as departure_actual_at,
+        cast(departure_scheduled as timestamp)  as departure_scheduled_at,
+        cast(departure_actual as timestamp)      as departure_actual_at,
 
         -- Compute delay from raw timestamps (moved from ingestion layer)
-        coalesce(
-            extract(epoch from
-                departure_actual::timestamptz - departure_scheduled::timestamptz
-            ) / 60,
+        cast(coalesce(
+            {{ delay_minutes(
+                'cast(departure_actual as timestamp)',
+                'cast(departure_scheduled as timestamp)'
+            ) }},
             0
-        )::int                            as delay_minutes,
+        ) as integer)                            as delay_minutes,
 
         -- Convenience flag for filtering/aggregation
         coalesce(
-            extract(epoch from
-                departure_actual::timestamptz - departure_scheduled::timestamptz
-            ) / 60,
+            {{ delay_minutes(
+                'cast(departure_actual as timestamp)',
+                'cast(departure_scheduled as timestamp)'
+            ) }},
             0
-        ) > 0                             as is_delayed,
+        ) > 0                                    as is_delayed,
 
-        ingested_at::timestamptz          as ingested_at
+        cast(ingested_at as timestamp)           as ingested_at
 
     from source
     where departure_scheduled is not null
