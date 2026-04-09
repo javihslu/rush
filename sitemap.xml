@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://javihslu.github.io/rush/</loc>
+         <lastmod>2026-04-09</lastmod>
+    </url>
+    <url>
+         <loc>https://javihslu.github.io/rush/ingestion/</loc>
+         <lastmod>2026-04-09</lastmod>
+    </url>
+    <url>
+         <loc>https://javihslu.github.io/rush/orchestration/</loc>
+         <lastmod>2026-04-09</lastmod>
+    </url>
+    <url>
+         <loc>https://javihslu.github.io/rush/repository/</loc>
+         <lastmod>2026-04-09</lastmod>
+    </url>
+    <url>
+         <loc>https://javihslu.github.io/rush/storage-docker/</loc>
+         <lastmod>2026-04-09</lastmod>
+    </url>
+    <url>
+         <loc>https://javihslu.github.io/rush/transformation/</loc>
+         <lastmod>2026-04-09</lastmod>
+    </url>
+    <url>
+         <loc>https://javihslu.github.io/rush/use-case/</loc>
+         <lastmod>2026-04-09</lastmod>
+    </url>
+</urlset>
