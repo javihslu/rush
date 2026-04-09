@@ -5,6 +5,8 @@ volumes:
     driver: local
   airflow_logs:
     driver: local
+  app_venv:
+    driver: local
 
 x-airflow-common: &airflow-common
   build: .
@@ -22,6 +24,7 @@ x-airflow-common: &airflow-common
     GCP_BUCKET_NAME: ${GCP_BUCKET_NAME:-}
   volumes:
     - .:/app
+    - app_venv:/app/.venv
     - ./dags:/opt/airflow/dags
     - airflow_logs:/opt/airflow/logs
     - ${HOME}/.config/gcloud/application_default_credentials.json:/gcp/credentials.json:ro
@@ -39,6 +42,7 @@ services:
       GCP_BUCKET_NAME: ${GCP_BUCKET_NAME:-}
     volumes:
       - .:/app
+      - app_venv:/app/.venv
       - ${HOME}/.config/gcloud/application_default_credentials.json:/gcp/credentials.json:ro
     depends_on:
       pgdatabase:
