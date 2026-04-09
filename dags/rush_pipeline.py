@@ -31,20 +31,20 @@ with DAG(
 
     ingest_transport = BashOperator(
         task_id="ingest_transport",
-        bash_command="uv run python /app/pipelines/ingestion/transport.py",
+        bash_command="cd /app && uv run python pipelines/ingestion/transport.py",
     )
 
     ingest_weather = BashOperator(
         task_id="ingest_weather",
-        bash_command="uv run python /app/pipelines/ingestion/weather.py",
+        bash_command="cd /app && uv run python pipelines/ingestion/weather.py",
     )
 
     transform = BashOperator(
         task_id="dbt_transform",
         bash_command=(
-            "uv run dbt run"
-            " --project-dir /app/pipelines/transformation/dbt"
-            " --profiles-dir /app/pipelines/transformation/dbt"
+            "cd /app && uv run dbt run"
+            " --project-dir pipelines/transformation/dbt"
+            " --profiles-dir pipelines/transformation/dbt"
         ),
     )
 
