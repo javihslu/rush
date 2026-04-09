@@ -77,7 +77,7 @@ Once running:
 - pgAdmin: http://localhost:8085
 - PostgreSQL: `localhost:5432`
 
-Ports are configurable in `config.yaml`.
+If you have port conflicts, stop the other containers before running `setup.sh`.
 
 To stop: `docker compose down`
 
@@ -146,11 +146,6 @@ database:
 pgadmin:
   email: admin@admin.com
   password: root
-
-ports:
-  postgres: 5432       # change these if you have port conflicts
-  pgadmin: 8085
-  airflow: 8080
 
 airflow:
   user: airflow

@@ -33,9 +33,6 @@ DB_HOST=$(yaml_val database host)
 DB_PORT=$(yaml_val database port)
 PGADMIN_EMAIL=$(yaml_val pgadmin email)
 PGADMIN_PASSWORD=$(yaml_val pgadmin password)
-PORT_POSTGRES=$(yaml_val ports postgres)
-PORT_PGADMIN=$(yaml_val ports pgadmin)
-PORT_AIRFLOW=$(yaml_val ports airflow)
 AIRFLOW_USER=$(yaml_val airflow user)
 AIRFLOW_PASSWORD=$(yaml_val airflow password)
 GCP_REGION=$(yaml_val gcp region)
@@ -186,11 +183,8 @@ POSTGRES_HOST=$DB_HOST
 POSTGRES_PORT=$DB_PORT
 PGADMIN_DEFAULT_EMAIL=$PGADMIN_EMAIL
 PGADMIN_DEFAULT_PASSWORD=$PGADMIN_PASSWORD
-POSTGRES_PORT_HOST=$PORT_POSTGRES
-PGADMIN_PORT_HOST=$PORT_PGADMIN
 AIRFLOW_USER=$AIRFLOW_USER
 AIRFLOW_PASSWORD=$AIRFLOW_PASSWORD
-AIRFLOW_PORT_HOST=$PORT_AIRFLOW
 ENVEOF
     echo "[ok] .env generated from config.yaml"
 else
@@ -395,7 +389,7 @@ fi
 echo "====================="
 echo "Setup complete."
 echo ""
-echo "  pgAdmin:    http://localhost:${PORT_PGADMIN:-8085}"
-echo "  Airflow:    http://localhost:${PORT_AIRFLOW:-8080}"
-echo "  PostgreSQL: localhost:${PORT_POSTGRES:-5432}"
+echo "  pgAdmin:    http://localhost:8085"
+echo "  Airflow:    http://localhost:8080"
+echo "  PostgreSQL: localhost:5432"
 echo "  Stop:       $COMPOSE down"

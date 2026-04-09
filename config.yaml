@@ -19,11 +19,6 @@ airflow:
   user: airflow
   password: airflow
 
-ports:
-  postgres: 5432
-  pgadmin: 8085
-  airflow: 8080
-
 gcp:
   region: europe-west6
   apis:
