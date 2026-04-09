@@ -64,13 +64,8 @@ The setup script checks for required tools and offers to install anything missin
 
 1. Installs missing prerequisites (gcloud CLI, Terraform) if you agree
 2. Creates `.env` from `config.yaml`
-3. Starts the local Docker stack (PostgreSQL, pgAdmin)
-4. Authenticates with Google Cloud (two browser logins)
-5. Creates a GCP project, links billing, enables APIs
-6. Generates `gcp_config.json` and `terraform.tfvars`
-7. Runs `terraform apply` to provision GCS bucket and BigQuery dataset
-
-Everything else (`gcloud`, `terraform`) is installed for you if missing.
+3. Starts the local Docker stack (PostgreSQL, pgAdmin, Airflow)
+4. Runs `scripts/setup-gcp.sh` for cloud onboarding (auth, project, billing, APIs, Terraform)
 
 Once running:
 - Airflow: http://localhost:8080 (workflow orchestration UI)
@@ -105,24 +100,29 @@ To fully clean up (containers, volumes, images, generated files):
 rush/
   pipelines/                # all data pipeline code
     ingestion/              # data ingestion scripts (dlt)
-      transport.py          # SBB/CFF schedules and delays
-      weather.py            # Open-Meteo weather data
+      transport.py          # SBB/CFF departures and delays
+      weather.py            # Open-Meteo weather forecasts
     transformation/         # data transformation
       dbt/                  # dbt project
         dbt_project.yml
         models/
-          staging/          # raw → cleaned views
+          staging/          # raw -> cleaned views
           marts/            # business-ready tables
       transform.py          # ad-hoc Python transforms
   dags/                     # Airflow DAG definitions
-  terraform/                # GCP infrastructure as code
+  terraform/                # GCP infrastructure (Terraform)
+    main.tf                 # GCS bucket + BigQuery dataset
+    variables.tf            # input variables
+    outputs.tf              # resource outputs
+  scripts/                  # helper scripts
+    setup-gcp.sh            # GCP project creation + auth + Terraform
   notebooks/                # exploratory analysis
   .devcontainer/            # VS Code Dev Container config
   config.yaml               # central configuration (single source of truth)
   config.py                 # Python config loader
-  Dockerfile                # dev container (Python 3.13 + uv + deps)
+  Dockerfile                # dev container (Python 3.12 + uv + Airflow)
   docker-compose.yaml       # full dev stack
-  setup.sh                  # one-command setup (local stack + GCP onboarding)
+  setup.sh                  # one-command setup (local stack + GCP)
   teardown.sh               # full cleanup (containers, volumes, images, GCP)
   pyproject.toml            # Python dependencies (uv)
 ```
