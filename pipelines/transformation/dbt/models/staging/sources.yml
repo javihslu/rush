@@ -22,8 +22,6 @@ sources:
             description: Scheduled departure timestamp (ISO-8601).
           - name: departure_actual
             description: Actual/forecast departure timestamp (ISO-8601), null if on time.
-          - name: delay_minutes
-            description: Delay in minutes (actual minus scheduled). Null if unknown.
           - name: platform_scheduled
             description: Scheduled departure platform.
           - name: platform_actual

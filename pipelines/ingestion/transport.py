@@ -58,10 +58,10 @@ def fetch_stationboard(station: str, limit: int = DEPARTURES_PER_STATION) -> lis
 
 
 def parse_departure(raw: dict, station_name: str, ingested_at: str) -> dict:
-    """Flatten one raw API departure object into a clean, typed row.
+    """Flatten one raw API departure object into a row for raw storage.
 
-    Computes delay in minutes from the scheduled vs. actual departure
-    timestamps when both are present.
+    Performs only structural flattening — no derived fields. All business
+    logic (delay calculation, flags) belongs in the dbt staging layer.
 
     Args:
         raw:          Raw departure dict from the stationboard API.
@@ -75,19 +75,6 @@ def parse_departure(raw: dict, station_name: str, ingested_at: str) -> dict:
     prognosis = stop.get("prognosis", {}) or {}
 
     scheduled_departure = stop.get("departure")
-    actual_departure = prognosis.get("departure")
-
-    # Derive delay in minutes when both timestamps are available
-    delay_minutes: int | None = None
-    if scheduled_departure and actual_departure:
-        try:
-            fmt = "%Y-%m-%dT%H:%M:%S%z"
-            delay_minutes = int(
-                (datetime.strptime(actual_departure, fmt) - datetime.strptime(scheduled_departure, fmt)).total_seconds()
-                / 60
-            )
-        except ValueError:
-            pass
 
     return {
         # Composite natural key: station + line number + scheduled departure
@@ -101,8 +88,7 @@ def parse_departure(raw: dict, station_name: str, ingested_at: str) -> dict:
         "platform_scheduled": stop.get("platform"),
         "platform_actual": prognosis.get("platform"),
         "departure_scheduled": scheduled_departure,
-        "departure_actual": actual_departure,
-        "delay_minutes": delay_minutes,
+        "departure_actual": prognosis.get("departure"),
         "ingested_at": ingested_at,
     }
 

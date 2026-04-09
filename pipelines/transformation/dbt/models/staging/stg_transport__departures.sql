@@ -2,6 +2,7 @@
 --
 -- Transformations applied:
 --   - Cast ISO-8601 strings to typed timestamps
+--   - Compute delay_minutes from scheduled vs actual departure
 --   - Default null delay to 0 (on-time) and derive is_delayed flag
 --   - Filter rows missing a scheduled departure (incomplete API records)
 
@@ -24,11 +25,21 @@ cleaned as (
         departure_scheduled::timestamptz  as departure_scheduled_at,
         departure_actual::timestamptz     as departure_actual_at,
 
-        -- Treat null delay as on-time (0 minutes)
-        coalesce(delay_minutes, 0)        as delay_minutes,
+        -- Compute delay from raw timestamps (moved from ingestion layer)
+        coalesce(
+            extract(epoch from
+                departure_actual::timestamptz - departure_scheduled::timestamptz
+            ) / 60,
+            0
+        )::int                            as delay_minutes,
 
         -- Convenience flag for filtering/aggregation
-        coalesce(delay_minutes, 0) > 0    as is_delayed,
+        coalesce(
+            extract(epoch from
+                departure_actual::timestamptz - departure_scheduled::timestamptz
+            ) / 60,
+            0
+        ) > 0                             as is_delayed,
 
         ingested_at::timestamptz          as ingested_at
 
