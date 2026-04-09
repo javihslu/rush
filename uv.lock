@@ -473,6 +473,22 @@ wheels = [
 ]
 
 [[package]]
+name = "dbt-postgres"
+version = "1.10.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "agate" },
+    { name = "dbt-adapters" },
+    { name = "dbt-common" },
+    { name = "dbt-core" },
+    { name = "psycopg2-binary" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/53/f2/6d101b917c9f4a6c09a15cc239dc360be5b1115e27d5bdac9c6c3bead5f1/dbt_postgres-1.10.0.tar.gz", hash = "sha256:74dc7e8b531ab785bca9d44f3d1ee9b38c4cbac967eafe7373242ed181eb0fa2", size = 160230, upload-time = "2025-12-22T20:02:44.149Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2c/70/4f8ab84353844e5c5b2961d18f8c3d171b539c2c0425f855c550d766c960/dbt_postgres-1.10.0-py3-none-any.whl", hash = "sha256:9bc9d07342edbc86c16e20b2ab02c211c30c09b03736f925d612d963cbbe4f94", size = 35520, upload-time = "2025-12-22T20:02:42.792Z" },
+]
+
+[[package]]
 name = "dbt-protos"
 version = "1.0.443"
 source = { registry = "https://pypi.org/simple" }
@@ -590,6 +606,9 @@ wheels = [
 [package.optional-dependencies]
 duckdb = [
     { name = "duckdb" },
+]
+postgres = [
+    { name = "psycopg2-binary" },
 ]
 
 [[package]]
@@ -2318,7 +2337,8 @@ source = { virtual = "." }
 dependencies = [
     { name = "dbt-core" },
     { name = "dbt-duckdb" },
-    { name = "dlt", extra = ["duckdb"] },
+    { name = "dbt-postgres" },
+    { name = "dlt", extra = ["duckdb", "postgres"] },
     { name = "pandas" },
     { name = "psycopg2-binary" },
     { name = "pyyaml" },
@@ -2338,7 +2358,8 @@ dev = [
 requires-dist = [
     { name = "dbt-core", specifier = ">=1.7" },
     { name = "dbt-duckdb", specifier = ">=1.7" },
-    { name = "dlt", extras = ["duckdb"], specifier = ">=1.0" },
+    { name = "dbt-postgres", specifier = ">=1.7" },
+    { name = "dlt", extras = ["duckdb", "postgres"], specifier = ">=1.0" },
     { name = "pandas", specifier = ">=2.2" },
     { name = "psycopg2-binary", specifier = ">=2.9" },
     { name = "pyyaml", specifier = ">=6.0" },

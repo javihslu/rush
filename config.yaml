@@ -16,8 +16,8 @@ pgadmin:
   password: root
 
 kestra:
-  user: admin@admin.com
-  password: admin
+  user: deng-proj@hslu.ch
+  password: Admin123!
 
 ports:
   postgres: 5432

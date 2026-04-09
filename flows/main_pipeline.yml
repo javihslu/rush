@@ -1,0 +1,50 @@
+id: main_pipeline
+namespace: rush
+description: |
+  Full Rush data pipeline — runs daily at 05:00.
+  Executes in sequence:
+    1. Ingest transport departures from SBB
+    2. Ingest weather forecast from Open-Meteo
+    3. Run dbt transformations to produce mart_departure_recommendations
+
+  Supports backfills: trigger manually from the Kestra UI with a custom
+  execution date to reprocess any past day.
+
+labels:
+  layer: orchestration
+
+tasks:
+  - id: ingest_transport
+    type: io.kestra.plugin.scripts.shell.Commands
+    runner: DOCKER
+    docker:
+      image: rush-dev
+      networkMode: rush_default
+        - /Users/gabriel/rush:/code
+    commands:
+      - /app/.venv/bin/python /app/pipelines/ingestion/transport.py
+
+  - id: ingest_weather
+    type: io.kestra.plugin.scripts.shell.Commands
+    runner: DOCKER
+    docker:
+      image: rush-dev
+      networkMode: rush_default
+        - /Users/gabriel/rush:/code
+    commands:
+      - /app/.venv/bin/python /app/pipelines/ingestion/weather.py
+
+  - id: transform
+    type: io.kestra.plugin.scripts.shell.Commands
+    runner: DOCKER
+    docker:
+      image: rush-dev
+      networkMode: rush_default
+        - /Users/gabriel/rush:/code
+    commands:
+      - /app/.venv/bin/dbt run --project-dir /app/pipelines/transformation/dbt --profiles-dir /app/pipelines/transformation/dbt
+
+triggers:
+  - id: daily_schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 5 * * *"

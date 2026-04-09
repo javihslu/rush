@@ -1,0 +1,26 @@
+id: weather_ingestion
+namespace: rush
+description: |
+  Fetches a 7-day hourly weather forecast for Luzern from Open-Meteo and
+  loads it into PostgreSQL (weather_raw.hourly_forecast) using dlt.
+  Runs twice daily — the forecast window shifts forward with each run.
+
+labels:
+  layer: ingestion
+  source: open-meteo
+
+tasks:
+  - id: ingest
+    type: io.kestra.plugin.scripts.shell.Commands
+    runner: DOCKER
+    docker:
+      image: rush-dev
+      networkMode: rush_default
+        - /Users/gabriel/rush:/code
+    commands:
+      - /app/.venv/bin/python /app/pipelines/ingestion/weather.py
+
+triggers:
+  - id: twice_daily_schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 6,18 * * *"

@@ -50,3 +50,4 @@ kestra_data/
 *.tfstate.backup
 *.tfvars
 *.pdf
+CLAUDE.md
