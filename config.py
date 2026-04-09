@@ -17,3 +17,9 @@ _CONFIG_PATH = Path(__file__).parent / "config.yaml"
 
 with _CONFIG_PATH.open() as f:
     cfg = yaml.safe_load(f)
+
+
+def get_db_url() -> str:
+    """Build a PostgreSQL DSN from config.yaml values."""
+    db = cfg["database"]
+    return f"postgresql://{db['user']}:{db['password']}@{db['host']}:{db['port']}/{db['name']}"

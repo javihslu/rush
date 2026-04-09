@@ -1,0 +1,58 @@
+version: 2
+
+sources:
+  - name: transport_raw
+    description: Raw SBB/CFF departure data loaded by the dlt transport pipeline.
+    schema: transport_raw
+    tables:
+      - name: departures
+        description: One row per departure fetched from transport.opendata.ch.
+        columns:
+          - name: id
+            description: Composite key (station + line number + scheduled departure).
+          - name: station
+            description: Queried station name.
+          - name: line_name
+            description: Full line name (e.g. IC 8 1516).
+          - name: category
+            description: Transport category (IC, IR, S, etc.).
+          - name: destination
+            description: Final destination of the service.
+          - name: departure_scheduled
+            description: Scheduled departure timestamp (ISO-8601).
+          - name: departure_actual
+            description: Actual/forecast departure timestamp (ISO-8601), null if on time.
+          - name: platform_scheduled
+            description: Scheduled departure platform.
+          - name: platform_actual
+            description: Actual departure platform (null if unchanged).
+          - name: ingested_at
+            description: UTC timestamp when this batch was ingested.
+
+  - name: weather_raw
+    description: Raw Open-Meteo hourly forecast data loaded by the dlt weather pipeline.
+    schema: weather_raw
+    tables:
+      - name: hourly_forecast
+        description: One row per forecast hour for Luzern (7-day rolling window).
+        columns:
+          - name: id
+            description: Composite key (latitude + longitude + forecast_time).
+          - name: forecast_time
+            description: Forecast hour in local time (Europe/Zurich).
+          - name: temperature_2m
+            description: Air temperature at 2 m height (°C).
+          - name: precipitation
+            description: Total precipitation (mm).
+          - name: rain
+            description: Liquid rain (mm).
+          - name: snowfall
+            description: Snowfall accumulation (cm).
+          - name: windspeed_10m
+            description: Wind speed at 10 m height (km/h).
+          - name: weathercode
+            description: WMO weather interpretation code.
+          - name: visibility
+            description: Visibility (m).
+          - name: ingested_at
+            description: UTC timestamp when this batch was ingested.

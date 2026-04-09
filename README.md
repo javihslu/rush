@@ -5,43 +5,27 @@ before the sky opens up, the trains break down, and everyone else has the same i
 
 ## Overview
 
-Rush crunches Swiss public transport schedules, weather forecasts, and historical traffic
-patterns to answer the only question that matters at 5 PM: *"Should I run for it now, or am
-I already doomed?"*
+Rush combines Swiss public transport schedules and weather forecasts to answer the only
+question that matters at 5 PM: *"Should I leave now, or wait it out?"*
 
 **What it watches:**
-- Your escape route (office location → home station)
-- Live SBB/CFF departures, delays, and cancellations
-- Current and forecasted weather — because nobody wants to sprint through hail
-- Time of day, day of week, and seasonal chaos patterns
+- Live SBB/CFF departures and delays from your office station
+- 7-day hourly weather forecast — temperature, rain, snow, wind, visibility
 
-**What it tells you:** The optimal escape window — minimizing wait time, weather misery,
-and the odds of being sardined into an overcrowded train.
+**What it tells you:** A departure recommendation (Ideal / Good / Risky / Bad) based
+on current delays and weather conditions.
 
 ## Quick Start
 
-One-liner (requires Git and Docker):
+One command sets up everything on macOS, Linux, or Windows (WSL):
+
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/javihslu/rush/main/install.sh)
 ```
 
-Or set up manually:
-
-### Prerequisites
-
-<details>
-<summary><strong>macOS / Linux</strong></summary>
-
-1. Install [Git](https://git-scm.com/downloads)
-2. Install [Docker Desktop](https://www.docker.com/products/docker-desktop)
-3. Clone and run:
-   ```bash
-   git clone git@github.com:javihslu/rush.git
-   cd rush
-   ./setup.sh
-   ```
-
-</details>
+This clones the repository, checks for required tools (installing anything
+missing), and starts the full Docker stack. If you already have the repo
+cloned, run `./setup.sh` from inside it.
 
 <details>
 <summary><strong>Windows</strong></summary>
@@ -52,32 +36,24 @@ Or set up manually:
    ```
 2. Restart your computer
 3. Install [Docker Desktop](https://www.docker.com/products/docker-desktop) (enable WSL 2 backend in settings)
-4. Open your WSL terminal (Ubuntu) and run:
-   ```bash
-   bash <(curl -fsSL https://raw.githubusercontent.com/javihslu/rush/main/install.sh)
-   ```
+4. Open your WSL terminal (Ubuntu) and run the command above
 
 </details>
 
-The setup script checks for required tools and offers to install anything missing
-(Homebrew on macOS, apt/dnf on Linux). It handles the full setup:
+What the setup does:
 
-1. Installs missing prerequisites (gcloud CLI, Terraform) if you agree
-2. Creates `.env` from `config.yaml`
-3. Starts the local Docker stack (PostgreSQL, pgAdmin)
-4. Authenticates with Google Cloud (two browser logins)
-5. Creates a GCP project, links billing, enables APIs
-6. Generates `gcp_config.json` and `terraform.tfvars`
-7. Runs `terraform apply` to provision GCS bucket and BigQuery dataset
-
-Everything else (`gcloud`, `terraform`) is installed for you if missing.
+1. Checks for Git, Docker, gcloud CLI, and Terraform -- offers to install anything missing
+2. Reads `config.yaml` and generates a `.env` file for Docker Compose
+3. Builds and starts all Docker containers (`docker compose up -d --build`)
+4. If gcloud is available, runs `scripts/setup-gcp.sh` for cloud onboarding
+5. Prints service URLs when everything is ready
 
 Once running:
-- Kestra: http://localhost:8080 (workflow orchestration UI)
+- Airflow: http://localhost:8080 (workflow orchestration UI)
 - pgAdmin: http://localhost:8085
 - PostgreSQL: `localhost:5432`
 
-Ports are configurable in `config.yaml`.
+If you have port conflicts, stop the other containers before running `setup.sh`.
 
 To stop: `docker compose down`
 
@@ -89,14 +65,14 @@ To fully clean up (containers, volumes, images, generated files):
 ## Tech Stack
 
 - **Ingestion**: dlt, Python
-- **Orchestration**: Kestra
-- **Warehouse**: DuckDB / BigQuery
+- **Orchestration**: Apache Airflow
+- **Warehouse**: PostgreSQL / BigQuery
 - **Transformation**: dbt
 - **Infrastructure**: Docker, Terraform
 
 ## Data Sources
 
-- [opentransportdata.swiss](https://opentransportdata.swiss) -- SBB/CFF schedules and delay data
+- [transport.opendata.ch](https://transport.opendata.ch) -- SBB/CFF schedules and delay data
 - [Open-Meteo](https://open-meteo.com) -- Weather forecasts and historical data (Swiss-based, free)
 
 ## Project Structure
@@ -105,24 +81,29 @@ To fully clean up (containers, volumes, images, generated files):
 rush/
   pipelines/                # all data pipeline code
     ingestion/              # data ingestion scripts (dlt)
-      transport.py          # SBB/CFF schedules and delays
-      weather.py            # Open-Meteo weather data
+      transport.py          # SBB/CFF departures and delays
+      weather.py            # Open-Meteo weather forecasts
     transformation/         # data transformation
       dbt/                  # dbt project
         dbt_project.yml
         models/
-          staging/          # raw → cleaned views
+          staging/          # raw -> cleaned views
           marts/            # business-ready tables
       transform.py          # ad-hoc Python transforms
-  flows/                    # Kestra workflow definitions (YAML)
-  terraform/                # GCP infrastructure as code
+  dags/                     # Airflow DAG definitions
+  terraform/                # GCP infrastructure (Terraform)
+    main.tf                 # GCS bucket + BigQuery dataset
+    variables.tf            # input variables
+    outputs.tf              # resource outputs
+  scripts/                  # helper scripts
+    setup-gcp.sh            # GCP project creation + auth + Terraform
   notebooks/                # exploratory analysis
   .devcontainer/            # VS Code Dev Container config
   config.yaml               # central configuration (single source of truth)
   config.py                 # Python config loader
-  Dockerfile                # dev container (Python 3.13 + uv + deps)
+  Dockerfile                # dev container (Python 3.12 + uv + Airflow)
   docker-compose.yaml       # full dev stack
-  setup.sh                  # one-command setup (local stack + GCP onboarding)
+  setup.sh                  # one-command setup (local stack + GCP)
   teardown.sh               # full cleanup (containers, volumes, images, GCP)
   pyproject.toml            # Python dependencies (uv)
 ```
@@ -147,14 +128,9 @@ pgadmin:
   email: admin@admin.com
   password: root
 
-ports:
-  postgres: 5432       # change these if you have port conflicts
-  pgadmin: 8085
-  kestra: 8080
-
-kestra:
-  user: admin@admin.com
-  password: admin
+airflow:
+  user: airflow
+  password: airflow
 
 gcp:
   region: europe-west6
